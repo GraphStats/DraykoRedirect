@@ -1,8 +1,8 @@
 import { cookies } from 'next/headers';
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'graphstats.pro@gmail.com';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'SamCloud2024';
-const AUTH_COOKIE = 'drayko_session';
+export const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'graphstats.pro@gmail.com';
+export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'SamCloud2024';
+export const AUTH_COOKIE = 'drayko_session';
 
 export async function login(email: string, pass: string) {
     if (email === ADMIN_EMAIL && pass === ADMIN_PASSWORD) {
