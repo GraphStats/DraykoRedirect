@@ -56,7 +56,7 @@ export default function Home() {
                             <p className="text-sm">Liens créés</p>
                         </div>
                         <div>
-                            <h3 style={{ fontSize: '1.8rem' }}>99.9997%</h3>
+                            <h3 style={{ fontSize: '1.8rem' }}>99.997%</h3>
                             <p className="text-sm">Uptime par an</p>
                         </div>
                     </div>
