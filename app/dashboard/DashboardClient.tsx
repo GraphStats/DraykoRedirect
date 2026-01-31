@@ -31,8 +31,6 @@ export default function DashboardClient({ initialRedirects }: { initialRedirects
       } else {
         setUrl('');
         setCustomId('');
-        // Ideally we'd fetch the new list or add it optimistically, 
-        // but reloading is safer for now to get server-generated fields
         window.location.reload();
       }
     } catch {
@@ -43,23 +41,24 @@ export default function DashboardClient({ initialRedirects }: { initialRedirects
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(1, 1fr)', gap: '2rem' }}>
-      <div className="glass-card fade-in">
+    <div className="dashboard-grid">
+      {/* Creation Panel - Fixed width or smaller ratio */}
+      <div className="glass-card fade-in create-panel">
         <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Créer un nouveau lien</h2>
-        <form onSubmit={handleCreate} style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', alignItems: 'end' }}>
-          <div style={{ flex: 1 }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>Destination URL</label>
+        <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div>
+            <label className="input-label">Destination URL</label>
             <input
               type="url"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               required
               placeholder="https://super-site.com"
-              style={{ width: '100%' }}
+              className="glass-input"
             />
           </div>
-          <div style={{ flex: 1 }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+          <div>
+            <label className="input-label">
               Slug personnalisé <span style={{ opacity: 0.5 }}>(optionnel)</span>
             </label>
             <input
@@ -67,33 +66,84 @@ export default function DashboardClient({ initialRedirects }: { initialRedirects
               value={customId}
               onChange={(e) => setCustomId(e.target.value)}
               placeholder="ex: ma-promo"
-              style={{ width: '100%' }}
+              className="glass-input"
             />
           </div>
-          <div>
-            <button type="submit" disabled={loading} className="btn btn-primary" style={{ width: '100%', height: '46px' }}>
-              {loading ? 'Création...' : 'Créer le lien'}
-            </button>
-          </div>
+
+          <button type="submit" disabled={loading} className="btn btn-primary" style={{ marginTop: '0.5rem', width: '100%', justifyContent: 'center' }}>
+            {loading ? 'Création...' : 'Créer le lien'}
+          </button>
         </form>
-        {error && <p style={{ color: '#ef4444', marginTop: '1rem', fontSize: '0.9rem' }}>{error}</p>}
+        {error && <p style={{ color: '#ef4444', marginTop: '1rem', fontSize: '0.9rem', textAlign: 'center' }}>{error}</p>}
       </div>
 
-      <div className="glass-card">
+      {/* List Panel - Takes remaining space */}
+      <div className="glass-card list-panel">
         <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Vos liens actifs</h2>
 
         {redirects.length === 0 ? (
-          <div style={{ padding: '3rem', textAlign: 'center', opacity: 0.6 }}>
+          <div style={{ padding: '3rem', textAlign: 'center', opacity: 0.6, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '300px' }}>
+            <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>🕸️</div>
             <p>Vous n'avez pas encore de liens.</p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '600px', overflowY: 'auto', paddingRight: '0.5rem' }} className="custom-scroll">
             {redirects.map((r) => (
               <RedirectItem key={r.id} redirect={r} />
             ))}
           </div>
         )}
       </div>
+
+      <style jsx>{`
+                .dashboard-grid {
+                    display: grid;
+                    grid-template-columns: 380px 1fr;
+                    gap: 2rem;
+                    align-items: start;
+                }
+                
+                .glass-input {
+                    background: rgba(0, 0, 0, 0.2);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    border-radius: 0.5rem;
+                    padding: 0.75rem;
+                    color: white;
+                    width: 100%;
+                    transition: all 0.2s;
+                }
+                .glass-input:focus {
+                    border-color: var(--primary);
+                    background: rgba(0, 0, 0, 0.4);
+                }
+
+                .input-label {
+                    display: block;
+                    margin-bottom: 0.5rem;
+                    font-size: 0.85rem;
+                    color: var(--text-muted);
+                }
+
+                .custom-scroll::-webkit-scrollbar {
+                    width: 6px;
+                }
+                .custom-scroll::-webkit-scrollbar-track {
+                    background: transparent;
+                }
+                .custom-scroll::-webkit-scrollbar-thumb {
+                    background: rgba(255, 255, 255, 0.1);
+                    border-radius: 3px;
+                }
+                .custom-scroll::-webkit-scrollbar-thumb:hover {
+                    background: rgba(255, 255, 255, 0.2);
+                }
+
+                @media (max-width: 1024px) {
+                    .dashboard-grid {
+                        grid-template-columns: 1fr;
+                    }
+                }
+            `}</style>
     </div>
   );
 }
@@ -103,9 +153,6 @@ function RedirectItem({ redirect }: { redirect: Redirect }) {
   const [editUrl, setEditUrl] = useState(redirect.url);
   const [showQr, setShowQr] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-
-  const fullUrl = typeof window !== 'undefined' ? `${window.location.origin}/${redirect.id}` : `.../${redirect.id}`;
-  const displayUrl = `drayko.xyz/${redirect.id}`; // Hardcoded brand URL for aesthetics if preferred, or use dynamic
 
   const handleDelete = async () => {
     if (!confirm('Voulez-vous vraiment supprimer ce lien ?')) return;
@@ -133,7 +180,6 @@ function RedirectItem({ redirect }: { redirect: Redirect }) {
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(`${window.location.origin}/redirect/${redirect.id}`);
-      // Could add toast here
       const btn = document.getElementById(`copy-${redirect.id}`);
       if (btn) {
         const original = btn.innerText;
@@ -181,19 +227,22 @@ function RedirectItem({ redirect }: { redirect: Redirect }) {
           </div>
 
           {isEditing ? (
-            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
               <input
                 type="url"
                 value={editUrl}
                 onChange={(e) => setEditUrl(e.target.value)}
-                style={{ padding: '0.4rem', fontSize: '0.9rem', width: '100%' }}
+                className="glass-input"
+                style={{ padding: '0.4rem', fontSize: '0.9rem', width: 'auto', flex: 1 }}
               />
-              <button onClick={handleSave} disabled={isSaving} className="btn btn-primary" style={{ padding: '0.4rem 1rem', fontSize: '0.8rem' }}>
-                OK
-              </button>
-              <button onClick={() => setIsEditing(false)} className="btn btn-glass" style={{ padding: '0.4rem 1rem', fontSize: '0.8rem' }}>
-                X
-              </button>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button onClick={handleSave} disabled={isSaving} className="btn btn-primary" style={{ padding: '0.4rem 1rem', fontSize: '0.8rem' }}>
+                  OK
+                </button>
+                <button onClick={() => setIsEditing(false)} className="btn btn-glass" style={{ padding: '0.4rem 1rem', fontSize: '0.8rem' }}>
+                  X
+                </button>
+              </div>
             </div>
           ) : (
             <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', wordBreak: 'break-all', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

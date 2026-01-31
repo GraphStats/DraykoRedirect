@@ -57,7 +57,7 @@ export default function Home() {
                         </div>
                         <div>
                             <h3 style={{ fontSize: '1.8rem' }}>99.999%</h3>
-                            <p className="text-sm">Uptime</p>
+                            <p className="text-sm">Uptime par an</p>
                         </div>
                     </div>
                 </div>
