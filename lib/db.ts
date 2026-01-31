@@ -15,6 +15,8 @@ export async function initDb() {
         clicks INTEGER DEFAULT 0
       )
     `;
+        await sql`ALTER TABLE redirects ADD COLUMN IF NOT EXISTS user_id TEXT`;
+        await sql`CREATE INDEX IF NOT EXISTS redirects_user_id_idx ON redirects(user_id)`;
     } catch (error) {
         console.error('Database initialization failed:', error);
     }

@@ -6,7 +6,7 @@ export default function Home() {
                 <nav className="nav-links">
                     <a href="#features">Fonctionnalites</a>
                     <a href="#how">Comment ca marche</a>
-                    <a className="nav-cta" href="/admin">Se connecter</a>
+                    <a className="nav-cta" href="/dashboard">Se connecter</a>
                 </nav>
             </header>
 
@@ -21,7 +21,7 @@ export default function Home() {
                         depuis un tableau de bord ultra clair.
                     </p>
                     <div className="cta-row reveal delay-3">
-                        <a className="btn primary" href="/admin">Acceder au dashboard</a>
+                        <a className="btn primary" href="/dashboard">Acceder au dashboard</a>
                         <a className="btn ghost" href="#features">Voir les fonctionnalites</a>
                     </div>
                     <div className="hero-meta reveal delay-4">
@@ -113,7 +113,7 @@ export default function Home() {
                     <h2>Pret a lancer vos prochains liens ?</h2>
                     <p>Le service est ouvert. Connectez-vous et creez votre premier lien.</p>
                 </div>
-                <a className="btn primary" href="/admin">Ouvrir le dashboard</a>
+                <a className="btn primary" href="/dashboard">Ouvrir le dashboard</a>
             </section>
 
             <footer className="landing-footer">

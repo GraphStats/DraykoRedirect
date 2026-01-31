@@ -3,3 +3,6 @@ node_modules
 *.db
 build_output*.txt
 .env*
+
+# clerk configuration (can include secrets)
+/.clerk/
