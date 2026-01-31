@@ -7,7 +7,7 @@ import DashboardClient from './DashboardClient';
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
-    const { userId } = auth();
+    const { userId } = await auth();
 
     if (!userId) {
         redirect('/dashboard/sign-in');

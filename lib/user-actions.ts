@@ -6,7 +6,7 @@ import { nanoid } from 'nanoid';
 import sql, { initDb } from './db';
 
 export async function createUserRedirect(url: string, customId?: string) {
-    const { userId } = auth();
+    const { userId } = await auth();
     if (!userId) throw new Error('Unauthorized');
 
     const id = customId || nanoid(6);
@@ -26,7 +26,7 @@ export async function createUserRedirect(url: string, customId?: string) {
 }
 
 export async function deleteUserRedirect(id: string) {
-    const { userId } = auth();
+    const { userId } = await auth();
     if (!userId) throw new Error('Unauthorized');
 
     await sql`DELETE FROM redirects WHERE id = ${id} AND user_id = ${userId}`;
@@ -35,7 +35,7 @@ export async function deleteUserRedirect(id: string) {
 }
 
 export async function getUserRedirects() {
-    const { userId } = auth();
+    const { userId } = await auth();
     if (!userId) throw new Error('Unauthorized');
 
     try {
