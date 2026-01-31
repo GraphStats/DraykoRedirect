@@ -52,11 +52,11 @@ export default function Home() {
 
                     <div style={{ marginTop: '3rem', display: 'flex', gap: '3rem', borderTop: '1px solid var(--glass-border)', paddingTop: '2rem' }}>
                         <div>
-                            <h3 style={{ fontSize: '1.8rem' }}>10k+</h3>
+                            <h3 style={{ fontSize: '1.8rem' }}>17k+</h3>
                             <p className="text-sm">Liens créés</p>
                         </div>
                         <div>
-                            <h3 style={{ fontSize: '1.8rem' }}>99.999%</h3>
+                            <h3 style={{ fontSize: '1.8rem' }}>99.9997%</h3>
                             <p className="text-sm">Uptime par an</p>
                         </div>
                     </div>
