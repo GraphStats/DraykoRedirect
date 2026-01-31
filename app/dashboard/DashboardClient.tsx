@@ -111,7 +111,7 @@ export default function DashboardClient({ initialRedirects }: { initialRedirects
                                 <div key={r.id} className="redirect-item">
                                     <div className="item-info">
                                         <div className="id-line">
-                                            <span className="slug">/redirect/{r.id}</span>
+                                            <span className="slug">https://redirect.drayko.xyz/redirect/{r.id}</span>
                                             <span className="clicks">{r.clicks} clics</span>
                                         </div>
                                         <div className="dest-line" title={r.url}>{r.url}</div>
