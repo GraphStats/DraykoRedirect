@@ -43,12 +43,26 @@ export async function getUserRedirects() {
             await sql`SELECT * FROM redirects WHERE user_id = ${userId} ORDER BY created_at DESC`;
         return rows as any[];
     } catch (error: any) {
-        if (error.message?.includes('relation \"redirects\" does not exist')) {
-            console.log('Table \"redirects\" not found, creating...');
+        if (error.message?.includes('relation "redirects" does not exist')) {
+            console.log('Table "redirects" not found, creating...');
             await initDb();
             return [];
         }
         console.error('Get redirects error:', error);
         return [];
+    }
+}
+
+export async function updateUserRedirect(id: string, newUrl: string) {
+    const { userId } = await auth();
+    if (!userId) throw new Error('Unauthorized');
+
+    try {
+        await sql`UPDATE redirects SET url = ${newUrl} WHERE id = ${id} AND user_id = ${userId}`;
+        revalidatePath('/dashboard');
+        return { success: true };
+    } catch (error) {
+        console.error('Update redirect error:', error);
+        return { error: 'Erreur lors de la mise à jour.' };
     }
 }

@@ -1,269 +1,259 @@
 'use client';
 
 import { useState } from 'react';
-import { createUserRedirect, deleteUserRedirect } from '@/lib/user-actions';
+import { createUserRedirect, deleteUserRedirect, updateUserRedirect } from '@/lib/user-actions';
 
-export default function DashboardClient({ initialRedirects }: { initialRedirects: any[] }) {
-    const [url, setUrl] = useState('');
-    const [customId, setCustomId] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-    const [redirects] = useState(initialRedirects);
+interface Redirect {
+  id: string;
+  url: string;
+  clicks: number;
+  created_at?: string;
+}
 
-    const handleCreate = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        setError('');
+export default function DashboardClient({ initialRedirects }: { initialRedirects: Redirect[] }) {
+  const [url, setUrl] = useState('');
+  const [customId, setCustomId] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-        try {
-            const res = await createUserRedirect(url, customId || undefined);
-            if (res.error) {
-                setError(res.error);
-            } else {
-                setUrl('');
-                setCustomId('');
-                window.location.reload();
-            }
-        } catch {
-            setError('Une erreur est survenue.');
-        } finally {
-            setLoading(false);
-        }
-    };
+  // Optimistic UI updates
+  const [redirects, setRedirects] = useState<Redirect[]>(initialRedirects);
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Voulez-vous vraiment supprimer ce lien ?')) return;
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
 
-        try {
-            await deleteUserRedirect(id);
-            window.location.reload();
-        } catch {
-            alert('Erreur lors de la suppression.');
-        }
-    };
+    try {
+      const res = await createUserRedirect(url, customId || undefined);
+      if (res.error) {
+        setError(res.error);
+      } else {
+        setUrl('');
+        setCustomId('');
+        // Ideally we'd fetch the new list or add it optimistically, 
+        // but reloading is safer for now to get server-generated fields
+        window.location.reload();
+      }
+    } catch {
+      setError('Une erreur est survenue.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const copyToClipboard = async (id: string) => {
-        const fullUrl = `${window.location.origin}/redirect/${id}`;
-        try {
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                await navigator.clipboard.writeText(fullUrl);
-                alert('Lien copie dans le presse-papier !');
-            } else {
-                throw new Error('Clipboard API not available');
-            }
-        } catch {
-            const textArea = document.createElement('textarea');
-            textArea.value = fullUrl;
-            document.body.appendChild(textArea);
-            textArea.select();
-            try {
-                document.execCommand('copy');
-                alert('Lien copie !');
-            } catch {
-                alert('Impossible de copier automatiquement. Voici le lien: ' + fullUrl);
-            }
-            document.body.removeChild(textArea);
-        }
-    };
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(1, 1fr)', gap: '2rem' }}>
+      <div className="glass-card fade-in">
+        <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Créer un nouveau lien</h2>
+        <form onSubmit={handleCreate} style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', alignItems: 'end' }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>Destination URL</label>
+            <input
+              type="url"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              required
+              placeholder="https://super-site.com"
+              style={{ width: '100%' }}
+            />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+              Slug personnalisé <span style={{ opacity: 0.5 }}>(optionnel)</span>
+            </label>
+            <input
+              type="text"
+              value={customId}
+              onChange={(e) => setCustomId(e.target.value)}
+              placeholder="ex: ma-promo"
+              style={{ width: '100%' }}
+            />
+          </div>
+          <div>
+            <button type="submit" disabled={loading} className="btn btn-primary" style={{ width: '100%', height: '46px' }}>
+              {loading ? 'Création...' : 'Créer le lien'}
+            </button>
+          </div>
+        </form>
+        {error && <p style={{ color: '#ef4444', marginTop: '1rem', fontSize: '0.9rem' }}>{error}</p>}
+      </div>
 
-    return (
-        <div className="dashboard-grid">
-            <section className="create-section">
-                <div className="card">
-                    <h2>Creer un nouveau lien</h2>
-                    <form onSubmit={handleCreate}>
-                        <div className="input-group">
-                            <label>URL de destination</label>
-                            <input
-                                type="url"
-                                value={url}
-                                onChange={(e) => setUrl(e.target.value)}
-                                required
-                                placeholder="https://google.com..."
-                            />
-                        </div>
-                        <div className="input-group">
-                            <label>Slug personnalise (optionnel)</label>
-                            <input
-                                type="text"
-                                value={customId}
-                                onChange={(e) => setCustomId(e.target.value)}
-                                placeholder="mon-lien-perso"
-                            />
-                            <p className="hint">Laisse vide pour un code aleatoire</p>
-                        </div>
-                        {error && <p className="error">{error}</p>}
-                        <button type="submit" disabled={loading}>
-                            {loading ? 'Creation...' : 'Generer le lien'}
-                        </button>
-                    </form>
-                </div>
-            </section>
+      <div className="glass-card">
+        <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Vos liens actifs</h2>
 
-            <section className="list-section">
-                <div className="card">
-                    <h2>Vos liens</h2>
-                    <div className="redirects-list">
-                        {redirects.length === 0 ? (
-                            <p className="empty">Aucun lien cree pour le moment.</p>
-                        ) : (
-                            redirects.map((r) => (
-                                <div key={r.id} className="redirect-item">
-                                    <div className="item-info">
-                                        <div className="id-line">
-                                            <span className="slug">https://redirect.drayko.xyz/redirect/{r.id}</span>
-                                            <span className="clicks">{r.clicks} clics</span>
-                                        </div>
-                                        <div className="dest-line" title={r.url}>{r.url}</div>
-                                    </div>
-                                    <div className="item-actions">
-                                        <button onClick={() => copyToClipboard(r.id)} className="copy-btn">Copier</button>
-                                        <button onClick={() => handleDelete(r.id)} className="delete-btn">Supprimer</button>
-                                    </div>
-                                </div>
-                            ))
-                        )}
-                    </div>
-                </div>
-            </section>
+        {redirects.length === 0 ? (
+          <div style={{ padding: '3rem', textAlign: 'center', opacity: 0.6 }}>
+            <p>Vous n'avez pas encore de liens.</p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {redirects.map((r) => (
+              <RedirectItem key={r.id} redirect={r} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
-            <style jsx>{`
-        .dashboard-grid {
-          display: grid;
-          grid-template-columns: 1fr 1.5fr;
-          gap: 2rem;
-        }
-        @media (max-width: 900px) {
-          .dashboard-grid {
-            grid-template-columns: 1fr;
-          }
-        }
-        .card {
-          background: var(--card);
-          padding: 2rem;
-          border-radius: var(--radius);
-          border: 1px solid var(--border);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.02);
-          height: fit-content;
-        }
-        h2 {
-          font-size: 1.25rem;
-          margin-bottom: 1.5rem;
-          font-weight: 600;
-        }
-        .input-group {
-          margin-bottom: 1.25rem;
-        }
-        label {
-          display: block;
-          font-size: 0.85rem;
-          color: var(--muted-foreground);
-          margin-bottom: 0.5rem;
-        }
-        input {
-          width: 100%;
-          padding: 0.75rem;
-          background: var(--input);
-          border: 1px solid var(--border);
-          border-radius: 0.5rem;
-          color: var(--foreground);
-        }
-        .hint {
-          font-size: 0.75rem;
-          color: var(--muted-foreground);
-          margin-top: 0.25rem;
-        }
-        .error {
-          color: #ef4444;
-          font-size: 0.85rem;
-          margin-bottom: 1rem;
-        }
-        button[type="submit"] {
-          width: 100%;
-          padding: 0.75rem;
-          background: var(--accent);
-          color: white;
-          border: none;
-          border-radius: 0.5rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-        button[type="submit"]:hover {
-          filter: brightness(1.05);
-          box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
-        }
-        .redirects-list {
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-        }
-        .redirect-item {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 1rem;
-          background: var(--background);
-          border: 1px solid var(--border);
-          border-radius: 0.5rem;
-        }
-        .item-info {
-           overflow: hidden;
-           margin-right: 1rem;
-        }
-        .slug {
-          font-weight: 700;
-          color: var(--accent);
-          font-family: monospace;
-          font-size: 1.1rem;
-        }
-        .clicks {
-          font-size: 0.75rem;
-          color: var(--muted-foreground);
-          margin-left: 0.75rem;
-          background: var(--muted);
-          padding: 0.1rem 0.4rem;
-          border-radius: 1rem;
-        }
-        .dest-line {
-          font-size: 0.85rem;
-          color: var(--muted-foreground);
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          margin-top: 0.25rem;
-        }
-        .item-actions {
-          display: flex;
-          gap: 0.5rem;
-        }
-        .copy-btn, .delete-btn {
-          padding: 0.4rem 0.8rem;
-          border-radius: 0.4rem;
-          font-size: 0.85rem;
-          cursor: pointer;
-          font-weight: 500;
-        }
-        .copy-btn {
-          background: var(--muted);
-          border: 1px solid var(--border);
-          color: var(--foreground);
-        }
-        .delete-btn {
-          background: transparent;
-          border: 1px solid #ef444433;
-          color: #ef4444;
-        }
-        .delete-btn:hover {
-          background: #ef4444;
-          color: white;
-        }
-        .empty {
-          text-align: center;
-          color: var(--muted-foreground);
-          padding: 2rem;
-        }
-      `}</style>
+function RedirectItem({ redirect }: { redirect: Redirect }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editUrl, setEditUrl] = useState(redirect.url);
+  const [showQr, setShowQr] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const fullUrl = typeof window !== 'undefined' ? `${window.location.origin}/${redirect.id}` : `.../${redirect.id}`;
+  const displayUrl = `drayko.xyz/${redirect.id}`; // Hardcoded brand URL for aesthetics if preferred, or use dynamic
+
+  const handleDelete = async () => {
+    if (!confirm('Voulez-vous vraiment supprimer ce lien ?')) return;
+    try {
+      await deleteUserRedirect(redirect.id);
+      window.location.reload();
+    } catch {
+      alert('Erreur lors de la suppression.');
+    }
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await updateUserRedirect(redirect.id, editUrl);
+      setIsEditing(false);
+      window.location.reload();
+    } catch {
+      alert('Erreur de sauvegarde');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/redirect/${redirect.id}`);
+      // Could add toast here
+      const btn = document.getElementById(`copy-${redirect.id}`);
+      if (btn) {
+        const original = btn.innerText;
+        btn.innerText = 'Copié !';
+        setTimeout(() => btn.innerText = original, 2000);
+      }
+    } catch {
+      alert('Erreur copie');
+    }
+  };
+
+  return (
+    <div style={{
+      background: 'rgba(255,255,255,0.03)',
+      border: '1px solid rgba(255,255,255,0.05)',
+      borderRadius: '16px',
+      padding: '1.25rem',
+      transition: 'background 0.2s',
+    }} className="redirect-row">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+
+        {/* Left Info */}
+        <div style={{ flex: 1, minWidth: '200px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+            <a href={`/redirect/${redirect.id}`} target="_blank" style={{
+              color: 'var(--accent)',
+              fontWeight: 700,
+              fontSize: '1.1rem',
+              fontFamily: 'monospace',
+              textDecoration: 'none',
+              display: 'flex', alignItems: 'center', gap: '0.5rem'
+            }}>
+              /{redirect.id}
+              <span style={{ fontSize: '0.8rem', opacity: 0.5 }}>↗</span>
+            </a>
+            <span style={{
+              fontSize: '0.75rem',
+              background: 'rgba(255,255,255,0.1)',
+              padding: '0.2rem 0.6rem',
+              borderRadius: '99px',
+              color: 'var(--text-muted)'
+            }}>
+              {redirect.clicks} clics
+            </span>
+          </div>
+
+          {isEditing ? (
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+              <input
+                type="url"
+                value={editUrl}
+                onChange={(e) => setEditUrl(e.target.value)}
+                style={{ padding: '0.4rem', fontSize: '0.9rem', width: '100%' }}
+              />
+              <button onClick={handleSave} disabled={isSaving} className="btn btn-primary" style={{ padding: '0.4rem 1rem', fontSize: '0.8rem' }}>
+                OK
+              </button>
+              <button onClick={() => setIsEditing(false)} className="btn btn-glass" style={{ padding: '0.4rem 1rem', fontSize: '0.8rem' }}>
+                X
+              </button>
+            </div>
+          ) : (
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', wordBreak: 'break-all', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ opacity: 0.5 }}>→</span>
+              {redirect.url}
+              <button onClick={() => setIsEditing(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: 0.5, padding: '2px' }} title="Modifier">
+                ✏️
+              </button>
+            </div>
+          )}
         </div>
-    );
+
+        {/* Right Actions */}
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <button
+            id={`copy-${redirect.id}`}
+            onClick={copyToClipboard}
+            className="btn btn-glass"
+            style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+          >
+            Copier
+          </button>
+          <button
+            onClick={() => setShowQr(!showQr)}
+            className="btn btn-glass"
+            style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+            title="Voir le QR Code"
+          >
+            QR
+          </button>
+          <button
+            onClick={handleDelete}
+            style={{
+              background: 'transparent',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              color: '#ef4444',
+              padding: '0.5rem 1rem',
+              borderRadius: '99px',
+              cursor: 'pointer',
+              fontSize: '0.85rem'
+            }}
+          >
+            Suppr.
+          </button>
+        </div>
+      </div>
+
+      {/* QR Code Expansion */}
+      {showQr && (
+        <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--glass-border)', textAlign: 'center', animation: 'fadeIn 0.3s ease' }}>
+          <p style={{ marginBottom: '1rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Scan pour accéder au lien</p>
+          <div style={{ background: 'white', padding: '1rem', borderRadius: '1rem', display: 'inline-block' }}>
+            <img
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/redirect/${redirect.id}`)}`}
+              alt="QR Code"
+              style={{ display: 'block' }}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }

@@ -17,13 +17,14 @@ export default async function DashboardPage() {
 
     return (
         <main className="dashboard-container">
-            <header className="dashboard-header">
-                <div className="container header-flex">
-                    <div>
-                        <h1>Dashboard</h1>
-                        <p style={{ color: 'var(--muted-foreground)', marginTop: '0.25rem' }}>
-                            Gere tes liens publics et leurs clics.
-                        </p>
+            <header className="dashboard-header" style={{ padding: '0.8rem 0' }}>
+                <div className="container header-flex" style={{ alignItems: 'center' }}>
+                    <div className="flex items-center gap-4">
+                        <span className="brand" style={{ fontSize: '1.2rem', background: 'linear-gradient(135deg, #fff 30%, #a78bfa 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                            DraykoRedirect
+                        </span>
+                        <div style={{ height: '24px', width: '1px', background: 'var(--border)' }}></div>
+                        <h1 style={{ fontSize: '0.9rem', margin: 0, color: 'var(--text-muted)', fontWeight: 500 }}>Dashboard</h1>
                     </div>
                     <UserButton afterSignOutUrl="/" />
                 </div>
