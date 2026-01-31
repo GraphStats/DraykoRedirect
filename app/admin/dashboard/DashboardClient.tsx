@@ -44,7 +44,7 @@ export default function DashboardClient({ initialRedirects }: { initialRedirects
     };
 
     const copyToClipboard = async (id: string) => {
-        const fullUrl = `${window.location.origin}/redirect/user/${id}`;
+        const fullUrl = `${window.location.origin}/redirect/${id}`;
         try {
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 await navigator.clipboard.writeText(fullUrl);
