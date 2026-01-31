@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-    title: 'Drayko Redirect',
-    description: 'Private URL Redirection Service',
+    title: 'DraykoRedirect',
+    description: "Service public de redirection d'URL",
 }
 
 export default function RootLayout({
