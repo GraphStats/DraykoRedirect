@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { UserButton } from '@clerk/nextjs';
 import { redirect } from 'next/navigation';
-import { getUserRedirects } from '@/lib/user-actions';
+import { getUserRedirects, getUserRedirectStats } from '@/lib/user-actions';
 import DashboardClient from './DashboardClient';
 
 export const dynamic = 'force-dynamic';
@@ -13,7 +13,10 @@ export default async function DashboardPage() {
         redirect('/dashboard/sign-in');
     }
 
-    const redirects = await getUserRedirects();
+    const [redirects, stats] = await Promise.all([
+        getUserRedirects(),
+        getUserRedirectStats(),
+    ]);
 
     return (
         <main className="dashboard-container">
@@ -31,7 +34,7 @@ export default async function DashboardPage() {
             </header>
 
             <div className="container content">
-                <DashboardClient initialRedirects={redirects} />
+                <DashboardClient initialRedirects={redirects} initialStats={stats} />
             </div>
         </main>
     );

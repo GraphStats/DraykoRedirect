@@ -17,6 +17,15 @@ export async function initDb() {
     `;
         await sql`ALTER TABLE redirects ADD COLUMN IF NOT EXISTS user_id TEXT`;
         await sql`CREATE INDEX IF NOT EXISTS redirects_user_id_idx ON redirects(user_id)`;
+        await sql`
+      CREATE TABLE IF NOT EXISTS redirect_click_events (
+        id BIGSERIAL PRIMARY KEY,
+        redirect_id TEXT NOT NULL REFERENCES redirects(id) ON DELETE CASCADE,
+        clicked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+        await sql`CREATE INDEX IF NOT EXISTS redirect_click_events_redirect_id_idx ON redirect_click_events(redirect_id)`;
+        await sql`CREATE INDEX IF NOT EXISTS redirect_click_events_clicked_at_idx ON redirect_click_events(clicked_at)`;
     } catch (error) {
         console.error('Database initialization failed:', error);
     }

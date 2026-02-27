@@ -5,6 +5,30 @@ import { revalidatePath } from 'next/cache';
 import { nanoid } from 'nanoid';
 import sql, { initDb } from './db';
 
+export interface UserDashboardStats {
+    totals: {
+        links: number;
+        totalClicks: number;
+        activeLinks: number;
+        avgClicksPerLink: number;
+        bestLinkId: string | null;
+        bestLinkClicks: number;
+    };
+    clicksLast7Days: Array<{
+        date: string;
+        clicks: number;
+    }>;
+    topLinks: Array<{
+        id: string;
+        url: string;
+        clicks: number;
+    }>;
+    recentClicks: Array<{
+        redirect_id: string;
+        clicked_at: string;
+    }>;
+}
+
 export async function createUserRedirect(url: string, customId?: string) {
     const { userId } = await auth();
     if (!userId) throw new Error('Unauthorized');
@@ -50,6 +74,117 @@ export async function getUserRedirects() {
         }
         console.error('Get redirects error:', error);
         return [];
+    }
+}
+
+export async function getUserRedirectStats(): Promise<UserDashboardStats> {
+    const { userId } = await auth();
+    if (!userId) throw new Error('Unauthorized');
+
+    try {
+        await initDb();
+
+        const { rows: totalsRows } = await sql`
+      SELECT
+        COUNT(*)::int AS links,
+        COALESCE(SUM(clicks), 0)::int AS total_clicks,
+        COUNT(*) FILTER (WHERE clicks > 0)::int AS active_links
+      FROM redirects
+      WHERE user_id = ${userId}
+    `;
+
+        const { rows: bestLinkRows } = await sql`
+      SELECT id, clicks
+      FROM redirects
+      WHERE user_id = ${userId}
+      ORDER BY clicks DESC, created_at ASC
+      LIMIT 1
+    `;
+
+        const { rows: clicksLast7DaysRows } = await sql`
+      WITH days AS (
+        SELECT generate_series(
+          CURRENT_DATE - INTERVAL '6 days',
+          CURRENT_DATE,
+          INTERVAL '1 day'
+        )::date AS day
+      )
+      SELECT
+        TO_CHAR(days.day, 'YYYY-MM-DD') AS date,
+        COALESCE(COUNT(r.id), 0)::int AS clicks
+      FROM days
+      LEFT JOIN redirect_click_events e
+        ON e.clicked_at >= days.day
+       AND e.clicked_at < days.day + INTERVAL '1 day'
+      LEFT JOIN redirects r
+        ON r.id = e.redirect_id
+       AND r.user_id = ${userId}
+      GROUP BY days.day
+      ORDER BY days.day ASC
+    `;
+
+        const { rows: topLinksRows } = await sql`
+      SELECT id, url, clicks
+      FROM redirects
+      WHERE user_id = ${userId}
+      ORDER BY clicks DESC, created_at DESC
+      LIMIT 5
+    `;
+
+        const { rows: recentClicksRows } = await sql`
+      SELECT
+        e.redirect_id,
+        e.clicked_at
+      FROM redirect_click_events e
+      INNER JOIN redirects r ON r.id = e.redirect_id
+      WHERE r.user_id = ${userId}
+      ORDER BY e.clicked_at DESC
+      LIMIT 8
+    `;
+
+        const totals = totalsRows[0] as
+            | { links: number; total_clicks: number; active_links: number }
+            | undefined;
+        const bestLink = bestLinkRows[0] as { id: string; clicks: number } | undefined;
+
+        const links = totals?.links ?? 0;
+        const totalClicks = totals?.total_clicks ?? 0;
+        const activeLinks = totals?.active_links ?? 0;
+
+        return {
+            totals: {
+                links,
+                totalClicks,
+                activeLinks,
+                avgClicksPerLink: links > 0 ? Number((totalClicks / links).toFixed(1)) : 0,
+                bestLinkId: bestLink?.id ?? null,
+                bestLinkClicks: bestLink?.clicks ?? 0,
+            },
+            clicksLast7Days: clicksLast7DaysRows as Array<{ date: string; clicks: number }>,
+            topLinks: topLinksRows as Array<{ id: string; url: string; clicks: number }>,
+            recentClicks: recentClicksRows as Array<{ redirect_id: string; clicked_at: string }>,
+        };
+    } catch (error: any) {
+        if (
+            error.message?.includes('relation "redirects" does not exist') ||
+            error.message?.includes('relation "redirect_click_events" does not exist')
+        ) {
+            await initDb();
+        }
+
+        return {
+            totals: {
+                links: 0,
+                totalClicks: 0,
+                activeLinks: 0,
+                avgClicksPerLink: 0,
+                bestLinkId: null,
+                bestLinkClicks: 0,
+            },
+            clicksLast7Days: [],
+            topLinks: [],
+            recentClicks: [],
+        };
     }
 }
 

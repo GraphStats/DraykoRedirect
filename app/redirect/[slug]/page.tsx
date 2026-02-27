@@ -1,4 +1,4 @@
-import sql from '@/lib/db';
+import sql, { initDb } from '@/lib/db';
 import { notFound } from 'next/navigation';
 import RedirectPageClient from './RedirectPageClient';
 
@@ -16,12 +16,14 @@ export default async function RedirectPage({
     }
 
     try {
+        await initDb();
         const { rows } = await sql`SELECT url FROM redirects WHERE id = ${slug}`;
         const redirectData = rows[0] as { url: string } | undefined;
 
         if (redirectData) {
             // Increment clicks immediately when the page is loaded
             await sql`UPDATE redirects SET clicks = clicks + 1 WHERE id = ${slug}`;
+            await sql`INSERT INTO redirect_click_events (redirect_id) VALUES (${slug})`;
 
             return <RedirectPageClient url={redirectData.url} />;
         }
