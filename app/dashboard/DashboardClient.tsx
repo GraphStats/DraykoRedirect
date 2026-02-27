@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { createUserRedirect, deleteUserRedirect, updateUserRedirect } from '@/lib/user-actions';
 
 interface Redirect {
@@ -62,25 +62,7 @@ export default function DashboardClient({
   const [customId, setCustomId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [sortBy, setSortBy] = useState<'recent' | 'clicks'>('recent');
-
-  const [redirects] = useState<Redirect[]>(initialRedirects);
-
-  const sortedRedirects = useMemo(() => {
-    const copy = [...redirects];
-
-    if (sortBy === 'clicks') {
-      copy.sort((a, b) => b.clicks - a.clicks);
-      return copy;
-    }
-
-    copy.sort((a, b) => {
-      const aTs = a.created_at ? new Date(a.created_at).getTime() : 0;
-      const bTs = b.created_at ? new Date(b.created_at).getTime() : 0;
-      return bTs - aTs;
-    });
-    return copy;
-  }, [redirects, sortBy]);
+  const redirects = initialRedirects;
 
   const maxDailyClicks = Math.max(...initialStats.clicksLast7Days.map((d) => d.clicks), 1);
 
@@ -107,72 +89,95 @@ export default function DashboardClient({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-      <section className="stats-grid">
-        <div className="glass-card stat-card">
-          <p className="stat-label">Total clics</p>
-          <p className="stat-value">{initialStats.totals.totalClicks}</p>
-          <p className="stat-sub">{initialStats.totals.activeLinks} liens actifs</p>
-        </div>
-        <div className="glass-card stat-card">
-          <p className="stat-label">Liens crees</p>
-          <p className="stat-value">{initialStats.totals.links}</p>
-          <p className="stat-sub">Moyenne: {initialStats.totals.avgClicksPerLink} clic / lien</p>
-        </div>
-        <div className="glass-card stat-card">
-          <p className="stat-label">Meilleur lien</p>
-          <p className="stat-value">{initialStats.totals.bestLinkClicks}</p>
-          <p className="stat-sub">
-            {initialStats.totals.bestLinkId ? `/${initialStats.totals.bestLinkId}` : 'Aucun pour le moment'}
-          </p>
-        </div>
-      </section>
+      <section className="glass-card section-card">
+        <h2 style={{ marginBottom: '1rem' }}>Stats</h2>
 
-      <section className="analytics-grid">
-        <div className="glass-card">
-          <h3 style={{ marginBottom: '1rem' }}>Clics sur 7 jours</h3>
-          {initialStats.clicksLast7Days.length === 0 ? (
-            <p style={{ opacity: 0.6 }}>Pas encore de donnees sur les 7 derniers jours.</p>
-          ) : (
-            <div className="bars-row">
-              {initialStats.clicksLast7Days.map((point) => (
-                <div key={point.date} className="bar-col">
-                  <div className="bar-wrap">
-                    <div
-                      className="bar"
-                      style={{
-                        height: `${Math.max((point.clicks / maxDailyClicks) * 140, point.clicks > 0 ? 12 : 4)}px`,
-                      }}
-                      title={`${point.clicks} clics`}
-                    />
+        <div className="stats-grid">
+          <div className="glass-card stat-card">
+            <p className="stat-label">Total clics</p>
+            <p className="stat-value">{initialStats.totals.totalClicks}</p>
+            <p className="stat-sub">{initialStats.totals.activeLinks} liens actifs</p>
+          </div>
+          <div className="glass-card stat-card">
+            <p className="stat-label">Liens crees</p>
+            <p className="stat-value">{initialStats.totals.links}</p>
+            <p className="stat-sub">Moyenne: {initialStats.totals.avgClicksPerLink} clic / lien</p>
+          </div>
+          <div className="glass-card stat-card">
+            <p className="stat-label">Meilleur lien</p>
+            <p className="stat-value">{initialStats.totals.bestLinkClicks}</p>
+            <p className="stat-sub">
+              {initialStats.totals.bestLinkId ? `/${initialStats.totals.bestLinkId}` : 'Aucun pour le moment'}
+            </p>
+          </div>
+        </div>
+
+        <div className="analytics-grid" style={{ marginTop: '1rem' }}>
+          <div className="glass-card">
+            <h3 style={{ marginBottom: '1rem' }}>Clics sur 7 jours</h3>
+            {initialStats.clicksLast7Days.length === 0 ? (
+              <p style={{ opacity: 0.6 }}>Pas encore de donnees sur les 7 derniers jours.</p>
+            ) : (
+              <div className="bars-row">
+                {initialStats.clicksLast7Days.map((point) => (
+                  <div key={point.date} className="bar-col">
+                    <div className="bar-wrap">
+                      <div
+                        className="bar"
+                        style={{
+                          height: `${Math.max((point.clicks / maxDailyClicks) * 140, point.clicks > 0 ? 12 : 4)}px`,
+                        }}
+                        title={`${point.clicks} clics`}
+                      />
+                    </div>
+                    <span className="bar-count">{point.clicks}</span>
+                    <span className="bar-label">{formatDayLabel(point.date)}</span>
                   </div>
-                  <span className="bar-count">{point.clicks}</span>
-                  <span className="bar-label">{formatDayLabel(point.date)}</span>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="glass-card">
+            <h3 style={{ marginBottom: '1rem' }}>Activite recente</h3>
+            {initialStats.recentClicks.length === 0 ? (
+              <p style={{ opacity: 0.6 }}>Aucun clic recent.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                {initialStats.recentClicks.map((event, index) => (
+                  <div
+                    key={`${event.redirect_id}-${event.clicked_at}-${index}`}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      gap: '0.75rem',
+                      fontSize: '0.9rem',
+                      borderBottom: '1px solid var(--glass-border)',
+                      paddingBottom: '0.4rem',
+                    }}
+                  >
+                    <span style={{ color: 'var(--accent)', fontFamily: 'monospace' }}>/{event.redirect_id}</span>
+                    <span style={{ color: 'var(--text-muted)' }}>{formatRelativeDate(event.clicked_at)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="glass-card">
-          <h3 style={{ marginBottom: '1rem' }}>Activite recente</h3>
-          {initialStats.recentClicks.length === 0 ? (
-            <p style={{ opacity: 0.6 }}>Aucun clic recent.</p>
+        <div className="glass-card" style={{ marginTop: '1rem' }}>
+          <h3 style={{ marginBottom: '1rem' }}>Top liens</h3>
+          {initialStats.topLinks.length === 0 ? (
+            <p style={{ opacity: 0.6 }}>Aucune performance a afficher.</p>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-              {initialStats.recentClicks.map((event, index) => (
-                <div
-                  key={`${event.redirect_id}-${event.clicked_at}-${index}`}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    gap: '0.75rem',
-                    fontSize: '0.9rem',
-                    borderBottom: '1px solid var(--glass-border)',
-                    paddingBottom: '0.4rem',
-                  }}
-                >
-                  <span style={{ color: 'var(--accent)', fontFamily: 'monospace' }}>/{event.redirect_id}</span>
-                  <span style={{ color: 'var(--text-muted)' }}>{formatRelativeDate(event.clicked_at)}</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {initialStats.topLinks.map((link) => (
+                <div key={link.id} style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.5rem' }}>
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ margin: 0, fontFamily: 'monospace', color: 'var(--accent)' }}>/{link.id}</p>
+                    <p style={{ margin: 0, opacity: 0.65, fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{link.url}</p>
+                  </div>
+                  <strong>{link.clicks} clics</strong>
                 </div>
               ))}
             </div>
@@ -180,87 +185,61 @@ export default function DashboardClient({
         </div>
       </section>
 
-      <div className="dashboard-grid">
-        <div className="glass-card fade-in create-panel">
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Creer un nouveau lien</h2>
-          <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <div>
-              <label className="input-label">Destination URL</label>
-              <input
-                type="url"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                required
-                placeholder="https://super-site.com"
-                className="glass-input"
-              />
-            </div>
-            <div>
-              <label className="input-label">
-                Slug personnalise <span style={{ opacity: 0.5 }}>(optionnel)</span>
-              </label>
-              <input
-                type="text"
-                value={customId}
-                onChange={(e) => setCustomId(e.target.value)}
-                placeholder="ex: ma-promo"
-                className="glass-input"
-              />
-            </div>
+      <section className="glass-card section-card">
+        <h2 style={{ marginBottom: '1rem' }}>Liste lien</h2>
 
-            <button type="submit" disabled={loading} className="btn btn-primary" style={{ marginTop: '0.5rem', width: '100%', justifyContent: 'center' }}>
-              {loading ? 'Creation...' : 'Creer le lien'}
-            </button>
-          </form>
-          {error && <p style={{ color: '#ef4444', marginTop: '1rem', fontSize: '0.9rem', textAlign: 'center' }}>{error}</p>}
-        </div>
-
-        <div className="glass-card list-panel">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-            <h2 style={{ fontSize: '1.5rem', margin: 0 }}>Vos liens actifs</h2>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as 'recent' | 'clicks')}
-              className="glass-input"
-              style={{ width: 'auto', minWidth: '200px', padding: '0.5rem 0.75rem' }}
-            >
-              <option value="recent">Trier: plus recents</option>
-              <option value="clicks">Trier: plus cliques</option>
-            </select>
-          </div>
-
-          {sortedRedirects.length === 0 ? (
-            <div style={{ padding: '3rem', textAlign: 'center', opacity: 0.6, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '300px' }}>
-              <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>Aucun</div>
-              <p>Vous n'avez pas encore de liens.</p>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '600px', overflowY: 'auto', paddingRight: '0.5rem' }} className="custom-scroll">
-              {sortedRedirects.map((r) => (
-                <RedirectItem key={r.id} redirect={r} />
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <section className="glass-card">
-        <h3 style={{ marginBottom: '1rem' }}>Top liens</h3>
-        {initialStats.topLinks.length === 0 ? (
-          <p style={{ opacity: 0.6 }}>Aucune performance a afficher.</p>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {initialStats.topLinks.map((link) => (
-              <div key={link.id} style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.5rem' }}>
-                <div style={{ minWidth: 0 }}>
-                  <p style={{ margin: 0, fontFamily: 'monospace', color: 'var(--accent)' }}>/{link.id}</p>
-                  <p style={{ margin: 0, opacity: 0.65, fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{link.url}</p>
-                </div>
-                <strong>{link.clicks} clics</strong>
+        <div className="dashboard-grid">
+          <div className="glass-card fade-in create-panel">
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Creer un nouveau lien</h2>
+            <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div>
+                <label className="input-label">Destination URL</label>
+                <input
+                  type="url"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  required
+                  placeholder="https://super-site.com"
+                  className="glass-input"
+                />
               </div>
-            ))}
+              <div>
+                <label className="input-label">
+                  Slug personnalise <span style={{ opacity: 0.5 }}>(optionnel)</span>
+                </label>
+                <input
+                  type="text"
+                  value={customId}
+                  onChange={(e) => setCustomId(e.target.value)}
+                  placeholder="ex: ma-promo"
+                  className="glass-input"
+                />
+              </div>
+
+              <button type="submit" disabled={loading} className="btn btn-primary" style={{ marginTop: '0.5rem', width: '100%', justifyContent: 'center' }}>
+                {loading ? 'Creation...' : 'Creer le lien'}
+              </button>
+            </form>
+            {error && <p style={{ color: '#ef4444', marginTop: '1rem', fontSize: '0.9rem', textAlign: 'center' }}>{error}</p>}
           </div>
-        )}
+
+          <div className="glass-card list-panel">
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Vos liens actifs</h2>
+
+            {redirects.length === 0 ? (
+              <div style={{ padding: '3rem', textAlign: 'center', opacity: 0.6, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '300px' }}>
+                <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>Aucun</div>
+                <p>Vous n'avez pas encore de liens.</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '600px', overflowY: 'auto', paddingRight: '0.5rem' }} className="custom-scroll">
+                {redirects.map((r) => (
+                  <RedirectItem key={r.id} redirect={r} />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </section>
 
       <style jsx>{`
@@ -278,6 +257,10 @@ export default function DashboardClient({
 
         .stat-card {
           min-height: 120px;
+        }
+
+        .section-card {
+          padding: 1.25rem;
         }
 
         .stat-label {
