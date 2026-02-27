@@ -124,7 +124,7 @@ export default function DashboardClient({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-      <section className="glass-card section-card">
+      <section className="glass-card section-card stats-section">
         <h2 style={{ marginBottom: '1rem' }}>Stats</h2>
 
         <div className="stats-grid">
@@ -238,7 +238,7 @@ export default function DashboardClient({
         </div>
       </section>
 
-      <section className="glass-card section-card">
+      <section className="glass-card section-card links-section">
         <h2 style={{ marginBottom: '1rem' }}>Liste lien</h2>
 
         <div className="dashboard-grid">
@@ -314,6 +314,14 @@ export default function DashboardClient({
 
         .section-card {
           padding: 1.25rem;
+        }
+
+        .links-section {
+          order: 1;
+        }
+
+        .stats-section {
+          order: 2;
         }
 
         .stat-label {
