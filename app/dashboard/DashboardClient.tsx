@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { createUserRedirect, deleteUserRedirect, updateUserRedirect } from '@/lib/user-actions';
+import { createUserRedirect, deleteUserRedirect, getUserRedirectLinkStats, updateUserRedirect } from '@/lib/user-actions';
 
 interface Redirect {
   id: string;
@@ -31,6 +31,32 @@ interface DashboardStats {
   recentClicks: Array<{
     redirect_id: string;
     clicked_at: string;
+    source_type: string | null;
+    referrer_host: string | null;
+  }>;
+  trafficSources: Array<{
+    source: string;
+    clicks: number;
+  }>;
+}
+
+interface LinkStats {
+  totals: {
+    clicks: number;
+    last24h: number;
+    last7d: number;
+  };
+  clicksLast7Days: Array<{
+    date: string;
+    clicks: number;
+  }>;
+  trafficSources: Array<{
+    source: string;
+    clicks: number;
+  }>;
+  topReferrers: Array<{
+    referrer_host: string;
+    clicks: number;
   }>;
 }
 
@@ -49,6 +75,15 @@ function formatRelativeDate(date: string) {
   if (min < 60) return `il y a ${min} min`;
   if (hour < 24) return `il y a ${hour} h`;
   return `il y a ${day} j`;
+}
+
+function formatSourceLabel(source: string | null) {
+  if (!source) return 'unknown';
+  if (source === 'direct') return 'direct';
+  if (source === 'social') return 'social';
+  if (source === 'search') return 'search';
+  if (source === 'referral') return 'site externe';
+  return source;
 }
 
 export default function DashboardClient({
@@ -157,7 +192,9 @@ export default function DashboardClient({
                     }}
                   >
                     <span style={{ color: 'var(--accent)', fontFamily: 'monospace' }}>/{event.redirect_id}</span>
-                    <span style={{ color: 'var(--text-muted)' }}>{formatRelativeDate(event.clicked_at)}</span>
+                    <span style={{ color: 'var(--text-muted)' }}>
+                      {formatSourceLabel(event.source_type)} · {formatRelativeDate(event.clicked_at)}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -178,6 +215,22 @@ export default function DashboardClient({
                     <p style={{ margin: 0, opacity: 0.65, fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{link.url}</p>
                   </div>
                   <strong>{link.clicks} clics</strong>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="glass-card" style={{ marginTop: '1rem' }}>
+          <h3 style={{ marginBottom: '1rem' }}>Origine des clics</h3>
+          {initialStats.trafficSources.length === 0 ? (
+            <p style={{ opacity: 0.6 }}>Pas assez de donnees.</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+              {initialStats.trafficSources.map((row) => (
+                <div key={row.source} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.35rem' }}>
+                  <span style={{ textTransform: 'capitalize' }}>{formatSourceLabel(row.source)}</span>
+                  <strong>{row.clicks}</strong>
                 </div>
               ))}
             </div>
@@ -390,6 +443,9 @@ function RedirectItem({ redirect }: { redirect: Redirect }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editUrl, setEditUrl] = useState(redirect.url);
   const [showQr, setShowQr] = useState(false);
+  const [showStats, setShowStats] = useState(false);
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [linkStats, setLinkStats] = useState<LinkStats | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   const handleDelete = async () => {
@@ -426,6 +482,26 @@ function RedirectItem({ redirect }: { redirect: Redirect }) {
       }
     } catch {
       alert('Erreur copie');
+    }
+  };
+
+  const toggleStats = async () => {
+    if (showStats) {
+      setShowStats(false);
+      return;
+    }
+
+    setShowStats(true);
+    if (linkStats) return;
+
+    setStatsLoading(true);
+    try {
+      const data = await getUserRedirectLinkStats(redirect.id);
+      setLinkStats(data);
+    } catch {
+      alert('Erreur chargement stats');
+    } finally {
+      setStatsLoading(false);
     }
   };
 
@@ -507,6 +583,14 @@ function RedirectItem({ redirect }: { redirect: Redirect }) {
             Copier
           </button>
           <button
+            onClick={toggleStats}
+            className="btn btn-glass"
+            style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+            title="Voir les stats individuelles"
+          >
+            Stats
+          </button>
+          <button
             onClick={() => setShowQr(!showQr)}
             className="btn btn-glass"
             style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
@@ -543,6 +627,75 @@ function RedirectItem({ redirect }: { redirect: Redirect }) {
               style={{ display: 'block' }}
             />
           </div>
+        </div>
+      )}
+
+      {showStats && (
+        <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--glass-border)' }}>
+          {statsLoading ? (
+            <p style={{ opacity: 0.7 }}>Chargement des stats...</p>
+          ) : !linkStats ? (
+            <p style={{ opacity: 0.7 }}>Aucune stat disponible.</p>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '0.75rem' }}>
+                <h4 style={{ margin: '0 0 0.75rem', fontSize: '0.95rem' }}>Resume du lien</h4>
+                <p style={{ margin: '0.25rem 0', fontSize: '0.9rem' }}>Total: <strong>{linkStats.totals.clicks}</strong></p>
+                <p style={{ margin: '0.25rem 0', fontSize: '0.9rem' }}>24h: <strong>{linkStats.totals.last24h}</strong></p>
+                <p style={{ margin: '0.25rem 0', fontSize: '0.9rem' }}>7 jours: <strong>{linkStats.totals.last7d}</strong></p>
+              </div>
+
+              <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '0.75rem' }}>
+                <h4 style={{ margin: '0 0 0.75rem', fontSize: '0.95rem' }}>Origine</h4>
+                {linkStats.trafficSources.length === 0 ? (
+                  <p style={{ margin: 0, opacity: 0.7 }}>Aucune source</p>
+                ) : (
+                  linkStats.trafficSources.map((row) => (
+                    <div key={row.source} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.88rem', marginBottom: '0.35rem' }}>
+                      <span>{formatSourceLabel(row.source)}</span>
+                      <strong>{row.clicks}</strong>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '0.75rem' }}>
+                <h4 style={{ margin: '0 0 0.75rem', fontSize: '0.95rem' }}>Referers</h4>
+                {linkStats.topReferrers.length === 0 ? (
+                  <p style={{ margin: 0, opacity: 0.7 }}>Aucun referer externe</p>
+                ) : (
+                  linkStats.topReferrers.map((row) => (
+                    <div key={row.referrer_host} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.88rem', marginBottom: '0.35rem', gap: '0.5rem' }}>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.referrer_host}</span>
+                      <strong>{row.clicks}</strong>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '0.75rem' }}>
+                <h4 style={{ margin: '0 0 0.75rem', fontSize: '0.95rem' }}>7 jours</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: '0.35rem', alignItems: 'end', minHeight: '80px' }}>
+                  {linkStats.clicksLast7Days.map((point) => {
+                    const localMax = Math.max(...linkStats.clicksLast7Days.map((d) => d.clicks), 1);
+                    return (
+                      <div key={point.date} style={{ textAlign: 'center' }}>
+                        <div
+                          style={{
+                            height: `${Math.max((point.clicks / localMax) * 50, point.clicks > 0 ? 8 : 3)}px`,
+                            borderRadius: '6px 6px 2px 2px',
+                            background: 'linear-gradient(180deg, #34d399 0%, #059669 100%)',
+                            marginBottom: '0.2rem',
+                          }}
+                        />
+                        <div style={{ fontSize: '0.65rem', opacity: 0.65 }}>{formatDayLabel(point.date)}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

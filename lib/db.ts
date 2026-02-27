@@ -21,11 +21,21 @@ export async function initDb() {
       CREATE TABLE IF NOT EXISTS redirect_click_events (
         id BIGSERIAL PRIMARY KEY,
         redirect_id TEXT NOT NULL REFERENCES redirects(id) ON DELETE CASCADE,
-        clicked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        clicked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        referrer_host TEXT,
+        source_type TEXT,
+        country_code TEXT,
+        user_agent TEXT
       )
     `;
+        await sql`ALTER TABLE redirect_click_events ADD COLUMN IF NOT EXISTS referrer_host TEXT`;
+        await sql`ALTER TABLE redirect_click_events ADD COLUMN IF NOT EXISTS source_type TEXT`;
+        await sql`ALTER TABLE redirect_click_events ADD COLUMN IF NOT EXISTS country_code TEXT`;
+        await sql`ALTER TABLE redirect_click_events ADD COLUMN IF NOT EXISTS user_agent TEXT`;
         await sql`CREATE INDEX IF NOT EXISTS redirect_click_events_redirect_id_idx ON redirect_click_events(redirect_id)`;
         await sql`CREATE INDEX IF NOT EXISTS redirect_click_events_clicked_at_idx ON redirect_click_events(clicked_at)`;
+        await sql`CREATE INDEX IF NOT EXISTS redirect_click_events_source_type_idx ON redirect_click_events(source_type)`;
+        await sql`CREATE INDEX IF NOT EXISTS redirect_click_events_referrer_host_idx ON redirect_click_events(referrer_host)`;
     } catch (error) {
         console.error('Database initialization failed:', error);
     }
