@@ -149,7 +149,7 @@ export default function Home() {
       </section>
 
       <footer className="footer">
-        <p>� 2026 DraykoRedirect. Design sobre, usage efficace.</p>
+        <p>(c) 2026 DraykoRedirect.</p>
       </footer>
 
       <style jsx>{`
