@@ -14,8 +14,8 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "@vercel/postgres": "^0.10.0",
     "@clerk/nextjs": "^6.14.5",
+    "@vercel/postgres": "^0.10.0",
     "nanoid": "^5.1.6",
     "next": "^16.1.4",
     "react": "^19.2.3",

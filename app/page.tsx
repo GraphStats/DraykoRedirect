@@ -1,225 +1,369 @@
+'use client';
+
 import Link from 'next/link';
 
+const features = [
+  {
+    title: 'Simple et rapide',
+    text: 'Creez un lien en quelques secondes avec une interface epuree et sans friction.',
+  },
+  {
+    title: 'Liens memorables',
+    text: 'Choisissez des slugs clairs pour partager des URLs propres et faciles a retenir.',
+  },
+  {
+    title: 'Suivi utile',
+    text: 'Consultez les clics, les sources de trafic et vos liens les plus performants.',
+  },
+];
+
+const steps = [
+  {
+    label: '01',
+    title: 'Ajoutez votre destination',
+    text: 'Collez votre URL complete dans le formulaire.',
+  },
+  {
+    label: '02',
+    title: 'Definissez un slug',
+    text: 'Utilisez un alias personnalise ou laissez la generation automatique.',
+  },
+  {
+    label: '03',
+    title: 'Partagez partout',
+    text: 'Diffusez votre nouveau lien court sur vos reseaux, mails et supports.',
+  },
+];
+
 export default function Home() {
-    return (
-        <main className="min-h-screen relative overflow-hidden">
-            {/* Ambient Background Blobs */}
-            <div className="hero-blob blob-1"></div>
-            <div className="hero-blob blob-2"></div>
+  return (
+    <main className="min-h-screen">
+      <nav className="landing-nav">
+        <div className="container landing-nav-inner">
+          <div className="brand" style={{ fontSize: '1.2rem', fontWeight: 800 }}>
+            DraykoRedirect
+          </div>
+          <div className="nav-links">
+            <Link href="#features">Fonctionnalites</Link>
+            <Link href="#how">Parcours</Link>
+            <Link href="/dashboard" className="btn btn-primary">
+              Ouvrir le dashboard
+            </Link>
+          </div>
+        </div>
+      </nav>
 
-            {/* Navigation */}
-            <nav className="landing-nav animate-in">
-                <div className="brand text-gradient" style={{ fontSize: '1.5rem' }}>DraykoRedirect</div>
-                <div className="nav-links">
-                    <Link href="#features">Fonctionnalités</Link>
-                    <Link href="#how">Fonctionnement</Link>
-                    <Link href="/dashboard" className="btn btn-primary">Se connecter</Link>
-                </div>
-            </nav>
+      <section className="container hero-section">
+        <div className="hero-grid">
+          <div className="animate-in delay-1">
+            <span className="hero-badge">Service public de redirection URL</span>
+            <h1 style={{ marginTop: '0.9rem' }}>
+              Raccourcissez vos liens avec
+              <br />
+              une interface moderne et lisible.
+            </h1>
+            <p style={{ maxWidth: 600, marginTop: '1rem' }}>
+              DraykoRedirect transforme des URLs longues en liens courts, stables et faciles a partager.
+              Le tout dans un espace de gestion clair, sans style neon.
+            </p>
+            <div className="hero-actions">
+              <Link href="/dashboard" className="btn btn-primary">
+                Commencer
+              </Link>
+              <Link href="#features" className="btn btn-soft">
+                Voir les avantages
+              </Link>
+            </div>
+          </div>
 
-            {/* Hero Visualization */}
-            <section className="container hero-section">
-                <div className="hero-content animate-in delay-1">
-                    <span style={{
-                        display: 'inline-block',
-                        padding: '0.5rem 1rem',
-                        background: 'rgba(139, 92, 246, 0.1)',
-                        border: '1px solid rgba(139, 92, 246, 0.2)',
-                        borderRadius: '99px',
-                        fontSize: '0.8rem',
-                        fontWeight: '600',
-                        color: 'var(--primary)',
-                        marginBottom: '1.5rem'
-                    }}>
-                        ✨ Service public de redirection
-                    </span>
-                    <h1>
-                        Des liens courts,<br />
-                        un impact <span className="text-gradient">immédiat</span>.
-                    </h1>
-                    <p style={{ marginBottom: '2.5rem', fontSize: '1.2rem', maxWidth: '500px' }}>
-                        Transformez vos URLs longues et complexes en liens élégants, mémorables et suivis.
-                        La solution ultime pour vos partages.
-                    </p>
-                    <div className="hero-btns">
-                        <Link href="/dashboard" className="btn btn-primary">
-                            Commencer gratuitement
-                        </Link>
-                        <Link href="#features" className="btn btn-glass">
-                            Voir les fonctionnalités
-                        </Link>
-                    </div>
+          <div className="glass-card hero-preview animate-in delay-2">
+            <div className="preview-top">
+              <span className="dot" />
+              <span className="dot" />
+              <span className="dot" />
+              <span className="preview-domain">redirect.drayko.xyz</span>
+            </div>
+            <div className="preview-block">
+              <small>URL source</small>
+              <p>https://example.com/articles/2026/guide-complet-lancement-printemps</p>
+            </div>
+            <div className="preview-arrow">Transforme en</div>
+            <div className="preview-block result">
+              <small>Lien court</small>
+              <p>redirect.drayko.xyz/printemps</p>
+            </div>
+            <div className="preview-stats">
+              <div>
+                <strong>17k+</strong>
+                <span>liens crees</span>
+              </div>
+              <div>
+                <strong>99.99%</strong>
+                <span>disponibilite</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-                    <div style={{ marginTop: '3rem', display: 'flex', gap: '3rem', borderTop: '1px solid var(--glass-border)', paddingTop: '2rem' }}>
-                        <div>
-                            <h3 style={{ fontSize: '1.8rem' }}>17k+</h3>
-                            <p className="text-sm">Liens créés</p>
-                        </div>
-                        <div>
-                            <h3 style={{ fontSize: '1.8rem' }}>99.997%</h3>
-                            <p className="text-sm">Uptime par an</p>
-                        </div>
-                    </div>
-                </div>
+      <section id="features" className="container section-space">
+        <div className="section-head animate-in delay-2">
+          <h2>Une experience plus sobre, pensee pour la production</h2>
+          <p>
+            Chaque ecran a ete simplifie pour aller droit au but: creer, suivre et administrer vos redirections.
+          </p>
+        </div>
+        <div className="feature-grid">
+          {features.map((feature) => (
+            <article className="glass-card feature-card" key={feature.title}>
+              <h3>{feature.title}</h3>
+              <p>{feature.text}</p>
+            </article>
+          ))}
+        </div>
+      </section>
 
-                <div className="hero-visual animate-in delay-2 animate-float">
-                    <div className="glass-card" style={{ padding: '2.5rem', position: 'relative' }}>
-                        {/* Decorative floating elements */}
-                        <div style={{
-                            position: 'absolute',
-                            top: '-20px',
-                            right: '-20px',
-                            background: 'var(--secondary)',
-                            padding: '1rem',
-                            borderRadius: '16px',
-                            boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
-                            transform: 'rotate(10deg)'
-                        }}>
-                            🚀
-                        </div>
+      <section id="how" className="container section-space">
+        <div className="glass-card how-card">
+          <h2>Un parcours en 3 etapes</h2>
+          <div className="steps-grid">
+            {steps.map((step) => (
+              <div className="step" key={step.label}>
+                <span>{step.label}</span>
+                <h3>{step.title}</h3>
+                <p>{step.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', alignItems: 'center' }}>
-                            <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ef4444' }}></div>
-                                <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#eab308' }}></div>
-                                <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#22c55e' }}></div>
-                            </div>
-                            <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', fontFamily: 'monospace' }}>redirect.drayko.xyz</div>
-                        </div>
+      <section className="container section-space cta-wrap">
+        <div className="glass-card cta-card">
+          <h2>Pret a moderniser vos liens ?</h2>
+          <p>Connectez-vous pour creer votre premier lien court et commencer le suivi des clics.</p>
+          <Link href="/dashboard" className="btn btn-primary">
+            Aller au dashboard
+          </Link>
+        </div>
+      </section>
 
-                        <div style={{ marginBottom: '1.5rem' }}>
-                            <label style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', color: 'rgba(255,255,255,0.5)', display: 'block', marginBottom: '0.5rem' }}>Source</label>
-                            <div style={{
-                                padding: '1rem',
-                                background: 'rgba(0,0,0,0.3)',
-                                borderRadius: '12px',
-                                fontFamily: 'monospace',
-                                color: '#ec4899',
-                                fontSize: '0.9rem',
-                                border: '1px solid rgba(255,255,255,0.05)'
-                            }}>
-                                https://monsite.com/promos/super-longue-url-2026/ref=twitter
-                            </div>
-                        </div>
+      <footer className="footer">
+        <p>� 2026 DraykoRedirect. Design sobre, usage efficace.</p>
+      </footer>
 
-                        <div style={{ textAlign: 'center', margin: '1rem 0' }}>
-                            <div style={{
-                                display: 'inline-flex',
-                                padding: '0.5rem',
-                                borderRadius: '50%',
-                                background: 'rgba(255,255,255,0.1)',
-                                border: '1px solid rgba(255,255,255,0.1)'
-                            }}>
-                                ↓
-                            </div>
-                        </div>
+      <style jsx>{`
+        .hero-grid {
+          display: grid;
+          grid-template-columns: 1.15fr 1fr;
+          gap: 2rem;
+          align-items: center;
+        }
 
-                        <div>
-                            <label style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', color: 'rgba(255,255,255,0.5)', display: 'block', marginBottom: '0.5rem' }}>Résultat</label>
-                            <div style={{
-                                padding: '1rem',
-                                background: 'rgba(34, 197, 94, 0.1)',
-                                borderRadius: '12px',
-                                fontFamily: 'monospace',
-                                color: '#06b6d4',
-                                fontSize: '1.1rem',
-                                fontWeight: 'bold',
-                                border: '1px solid rgba(6, 182, 212, 0.3)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between'
-                            }}>
-                                <span>redirect.drayko.xyz/hiver</span>
-                                <span style={{ fontSize: '1.2rem' }}>✨</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
+        .hero-badge {
+          display: inline-block;
+          border-radius: 999px;
+          background: var(--brand-soft);
+          color: var(--brand);
+          padding: 0.36rem 0.72rem;
+          font-size: 0.76rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
 
-            {/* Features Grid */}
-            <section id="features" className="container" style={{ padding: '6rem 2rem' }}>
-                <div style={{ textAlign: 'center', marginBottom: '5rem' }} className="animate-in delay-3">
-                    <h2 style={{ marginBottom: '1rem' }}>Pourquoi utiliser <span className="text-gradient">DraykoRedirect</span> ?</h2>
-                    <p style={{ maxWidth: '600px', margin: '0 auto' }}>
-                        Une suite d'outils pensée pour la performance et conçue pour votre image de marque.
-                    </p>
-                </div>
+        .hero-actions {
+          margin-top: 1.8rem;
+          display: flex;
+          gap: 0.65rem;
+          flex-wrap: wrap;
+        }
 
-                <div className="features-grid animate-in delay-3">
-                    <div className="glass-card">
-                        <div className="feature-icon" style={{ fontSize: '1.5rem' }}>⚡</div>
-                        <h3>Redirections Éclairs</h3>
-                        <p style={{ marginTop: '1rem', fontSize: '0.95rem' }}>
-                            Infrastructure optimisée en bordure de réseau (Edge) pour une latence minimale. Vos visiteurs n'attendent pas.
-                        </p>
-                    </div>
-                    <div className="glass-card">
-                        <div className="feature-icon" style={{ fontSize: '1.5rem' }}>🎨</div>
-                        <h3>Slugs Personnalisés</h3>
-                        <p style={{ marginTop: '1rem', fontSize: '0.95rem' }}>
-                            Fini les suites de caractères aléatoires. Choisissez un slug qui correspond à votre contenu (ex: /promo, /youtube).
-                        </p>
-                    </div>
-                    <div className="glass-card">
-                        <div className="feature-icon" style={{ fontSize: '1.5rem' }}>📊</div>
-                        <h3>Suivi en Temps Réel</h3>
-                        <p style={{ marginTop: '1rem', fontSize: '0.95rem' }}>
-                            Un tableau de bord précis pour suivre chaque clic. Comprenez votre audience instantanément.
-                        </p>
-                    </div>
-                </div>
-            </section>
+        .hero-preview {
+          padding: 1rem;
+          border-radius: 20px;
+        }
 
-            {/* How It Works */}
-            <section id="how" className="container" style={{ padding: '4rem 2rem 6rem' }}>
-                <div className="glass-card" style={{ padding: '3rem', position: 'relative', overflow: 'hidden' }}>
-                    <div className="hero-blob" style={{ width: '300px', height: '300px', top: '-50px', right: '-50px', background: 'radial-gradient(circle, var(--accent) 0%, transparent 70%)' }}></div>
+        .preview-top {
+          display: flex;
+          align-items: center;
+          gap: 0.35rem;
+          padding-bottom: 0.8rem;
+          border-bottom: 1px solid var(--line);
+        }
 
-                    <h2 style={{ marginBottom: '3rem' }}>Simple comme bonjour.</h2>
+        .dot {
+          width: 9px;
+          height: 9px;
+          border-radius: 50%;
+          background: #cad5e3;
+        }
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem', position: 'relative', zIndex: 1 }}>
-                        <div style={{ borderLeft: '2px solid var(--primary)', paddingLeft: '1.5rem' }}>
-                            <span style={{ fontSize: '3rem', fontWeight: '800', opacity: 0.2, lineHeight: 1 }}>01</span>
-                            <h3 style={{ fontSize: '1.2rem', margin: '0.5rem 0' }}>Collez votre lien</h3>
-                            <p style={{ fontSize: '0.9rem' }}>Entrez l'URL de destination que vous souhaitez raccourcir.</p>
-                        </div>
-                        <div style={{ borderLeft: '2px solid var(--secondary)', paddingLeft: '1.5rem' }}>
-                            <span style={{ fontSize: '3rem', fontWeight: '800', opacity: 0.2, lineHeight: 1 }}>02</span>
-                            <h3 style={{ fontSize: '1.2rem', margin: '0.5rem 0' }}>Personnalisez</h3>
-                            <p style={{ fontSize: '0.9rem' }}>Définissez un alias court ou laissez-nous en générer un pour vous.</p>
-                        </div>
-                        <div style={{ borderLeft: '2px solid var(--accent)', paddingLeft: '1.5rem' }}>
-                            <span style={{ fontSize: '3rem', fontWeight: '800', opacity: 0.2, lineHeight: 1 }}>03</span>
-                            <h3 style={{ fontSize: '1.2rem', margin: '0.5rem 0' }}>Partagez</h3>
-                            <p style={{ fontSize: '0.9rem' }}>Copiez votre nouveau lien et diffusez-le sur vos réseaux.</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
+        .preview-domain {
+          margin-left: auto;
+          font-size: 0.78rem;
+          color: var(--text-muted);
+        }
 
-            {/* Final CTA */}
-            <section className="container" style={{ padding: '0 2rem 8rem' }}>
-                <div style={{
-                    textAlign: 'center',
-                    padding: '5rem 2rem',
-                    borderRadius: '3rem',
-                    background: 'linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.0) 100%)',
-                    border: '1px solid var(--glass-border)'
-                }}>
-                    <h2 style={{ fontSize: '2.5rem', marginBottom: '1.5rem' }}>Prêt à transformer vos liens ?</h2>
-                    <p style={{ marginBottom: '2.5rem', maxWidth: '600px', margin: '0 auto 2.5rem' }}>
-                        Rejoignez la nouvelle génération de créateurs qui utilisent DraykoRedirect.
-                    </p>
-                    <Link href="/dashboard" className="btn btn-primary" style={{ transform: 'scale(1.1)', padding: '1rem 2.5rem' }}>
-                        Créer mon premier lien
-                    </Link>
-                </div>
-            </section>
+        .preview-block {
+          margin-top: 0.95rem;
+          border: 1px solid var(--line);
+          border-radius: 12px;
+          padding: 0.82rem;
+          background: #fbfdff;
+        }
 
-            <footer className="footer">
-                <p style={{ opacity: 0.6 }}>© 2026 DraykoRedirect. Redirections claires pour le web public.</p>
-            </footer>
-        </main>
-    );
+        .preview-block small {
+          display: block;
+          margin-bottom: 0.42rem;
+          color: var(--text-muted);
+          font-size: 0.73rem;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          font-weight: 700;
+        }
+
+        .preview-block p {
+          color: #243244;
+          font-size: 0.9rem;
+          line-height: 1.5;
+          word-break: break-word;
+        }
+
+        .preview-arrow {
+          text-align: center;
+          margin-top: 0.8rem;
+          font-size: 0.82rem;
+          color: var(--text-muted);
+          font-weight: 600;
+        }
+
+        .preview-block.result {
+          background: #eff6ff;
+          border-color: #bfdbfe;
+        }
+
+        .preview-block.result p {
+          color: #1e40af;
+          font-weight: 700;
+          font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+        }
+
+        .preview-stats {
+          margin-top: 1rem;
+          padding-top: 0.9rem;
+          border-top: 1px solid var(--line);
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 0.6rem;
+        }
+
+        .preview-stats div {
+          display: flex;
+          flex-direction: column;
+          gap: 0.2rem;
+        }
+
+        .preview-stats strong {
+          color: #1f2937;
+          font-size: 1.15rem;
+        }
+
+        .preview-stats span {
+          color: var(--text-muted);
+          font-size: 0.8rem;
+        }
+
+        .section-space {
+          padding-bottom: 3.4rem;
+        }
+
+        .section-head {
+          margin-bottom: 1rem;
+          max-width: 800px;
+        }
+
+        .section-head p {
+          margin-top: 0.7rem;
+        }
+
+        .feature-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 1rem;
+        }
+
+        .feature-card {
+          padding: 1.1rem;
+        }
+
+        .feature-card h3 {
+          margin-bottom: 0.45rem;
+          font-size: 1.05rem;
+        }
+
+        .how-card {
+          padding: 1.2rem;
+        }
+
+        .steps-grid {
+          margin-top: 1rem;
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 0.8rem;
+        }
+
+        .step {
+          border: 1px solid var(--line);
+          border-radius: 12px;
+          background: #fbfdff;
+          padding: 0.9rem;
+        }
+
+        .step span {
+          color: #1d4ed8;
+          font-weight: 800;
+          font-size: 0.76rem;
+        }
+
+        .step h3 {
+          font-size: 0.95rem;
+          margin: 0.45rem 0;
+        }
+
+        .step p {
+          font-size: 0.9rem;
+        }
+
+        .cta-wrap {
+          padding-bottom: 3rem;
+        }
+
+        .cta-card {
+          text-align: center;
+          padding: 2.3rem 1rem;
+          background: linear-gradient(180deg, #ffffff 0%, #f7faff 100%);
+        }
+
+        .cta-card p {
+          margin: 0.7rem auto 1.2rem;
+          max-width: 620px;
+        }
+
+        @media (max-width: 1080px) {
+          .hero-grid,
+          .feature-grid,
+          .steps-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .hero-preview {
+            max-width: 720px;
+          }
+        }
+      `}</style>
+    </main>
+  );
 }
+
+

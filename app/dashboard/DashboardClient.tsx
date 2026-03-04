@@ -1,7 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { createUserRedirect, deleteUserRedirect, getUserRedirectLinkStats, updateUserRedirect } from '@/lib/user-actions';
+import {
+  createUserRedirect,
+  deleteUserRedirect,
+  getUserRedirectLinkStats,
+  updateUserRedirect,
+} from '@/lib/user-actions';
 
 interface Redirect {
   id: string;
@@ -97,7 +102,6 @@ export default function DashboardClient({
   const [customId, setCustomId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const redirects = initialRedirects;
 
   const maxDailyClicks = Math.max(...initialStats.clicksLast7Days.map((d) => d.clicks), 1);
 
@@ -123,35 +127,35 @@ export default function DashboardClient({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-      <section className="glass-card section-card stats-section">
-        <h2 style={{ marginBottom: '1rem' }}>Stats</h2>
+    <div className="dash-layout">
+      <section className="glass-card section-card">
+        <h2>Apercu global</h2>
 
         <div className="stats-grid">
-          <div className="glass-card stat-card">
+          <article className="stat-card">
             <p className="stat-label">Total clics</p>
             <p className="stat-value">{initialStats.totals.totalClicks}</p>
             <p className="stat-sub">{initialStats.totals.activeLinks} liens actifs</p>
-          </div>
-          <div className="glass-card stat-card">
+          </article>
+          <article className="stat-card">
             <p className="stat-label">Liens crees</p>
             <p className="stat-value">{initialStats.totals.links}</p>
             <p className="stat-sub">Moyenne: {initialStats.totals.avgClicksPerLink} clic / lien</p>
-          </div>
-          <div className="glass-card stat-card">
+          </article>
+          <article className="stat-card">
             <p className="stat-label">Meilleur lien</p>
             <p className="stat-value">{initialStats.totals.bestLinkClicks}</p>
             <p className="stat-sub">
               {initialStats.totals.bestLinkId ? `/${initialStats.totals.bestLinkId}` : 'Aucun pour le moment'}
             </p>
-          </div>
+          </article>
         </div>
 
-        <div className="analytics-grid" style={{ marginTop: '1rem' }}>
-          <div className="glass-card">
-            <h3 style={{ marginBottom: '1rem' }}>Clics sur 7 jours</h3>
+        <div className="analytics-grid">
+          <article className="card-block">
+            <h3>Clics sur 7 jours</h3>
             {initialStats.clicksLast7Days.length === 0 ? (
-              <p style={{ opacity: 0.6 }}>Pas encore de donnees sur les 7 derniers jours.</p>
+              <p>Pas encore de donnees sur les 7 derniers jours.</p>
             ) : (
               <div className="bars-row">
                 {initialStats.clicksLast7Days.map((point) => (
@@ -160,7 +164,7 @@ export default function DashboardClient({
                       <div
                         className="bar"
                         style={{
-                          height: `${Math.max((point.clicks / maxDailyClicks) * 140, point.clicks > 0 ? 12 : 4)}px`,
+                          height: `${Math.max((point.clicks / maxDailyClicks) * 122, point.clicks > 0 ? 10 : 3)}px`,
                         }}
                         title={`${point.clicks} clics`}
                       />
@@ -171,275 +175,315 @@ export default function DashboardClient({
                 ))}
               </div>
             )}
-          </div>
+          </article>
 
-          <div className="glass-card">
-            <h3 style={{ marginBottom: '1rem' }}>Activite recente</h3>
+          <article className="card-block">
+            <h3>Activite recente</h3>
             {initialStats.recentClicks.length === 0 ? (
-              <p style={{ opacity: 0.6 }}>Aucun clic recent.</p>
+              <p>Aucun clic recent.</p>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+              <div className="activity-list">
                 {initialStats.recentClicks.map((event, index) => (
-                  <div
-                    key={`${event.redirect_id}-${event.clicked_at}-${index}`}
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      gap: '0.75rem',
-                      fontSize: '0.9rem',
-                      borderBottom: '1px solid var(--glass-border)',
-                      paddingBottom: '0.4rem',
-                    }}
-                  >
-                    <span style={{ color: 'var(--accent)', fontFamily: 'monospace' }}>/{event.redirect_id}</span>
-                    <span style={{ color: 'var(--text-muted)' }}>
+                  <div key={`${event.redirect_id}-${event.clicked_at}-${index}`} className="activity-item">
+                    <span className="mono-link">/{event.redirect_id}</span>
+                    <span>
                       {formatSourceLabel(event.source_type)} · {formatRelativeDate(event.clicked_at)}
                     </span>
                   </div>
                 ))}
               </div>
             )}
-          </div>
+          </article>
         </div>
 
-        <div className="glass-card" style={{ marginTop: '1rem' }}>
-          <h3 style={{ marginBottom: '1rem' }}>Top liens</h3>
-          {initialStats.topLinks.length === 0 ? (
-            <p style={{ opacity: 0.6 }}>Aucune performance a afficher.</p>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {initialStats.topLinks.map((link) => (
-                <div key={link.id} style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.5rem' }}>
-                  <div style={{ minWidth: 0 }}>
-                    <p style={{ margin: 0, fontFamily: 'monospace', color: 'var(--accent)' }}>/{link.id}</p>
-                    <p style={{ margin: 0, opacity: 0.65, fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{link.url}</p>
-                  </div>
-                  <strong>{link.clicks} clics</strong>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="glass-card" style={{ marginTop: '1rem' }}>
-          <h3 style={{ marginBottom: '1rem' }}>Origine des clics</h3>
-          {initialStats.trafficSources.length === 0 ? (
-            <p style={{ opacity: 0.6 }}>Pas assez de donnees.</p>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-              {initialStats.trafficSources.map((row) => (
-                <div key={row.source} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.35rem' }}>
-                  <span style={{ textTransform: 'capitalize' }}>{formatSourceLabel(row.source)}</span>
-                  <strong>{row.clicks}</strong>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-
-      <section className="glass-card section-card links-section">
-        <h2 style={{ marginBottom: '1rem' }}>Liste lien</h2>
-
-        <div className="dashboard-grid">
-          <div className="glass-card fade-in create-panel">
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Creer un nouveau lien</h2>
-            <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <div>
-                <label className="input-label">Destination URL</label>
-                <input
-                  type="url"
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  required
-                  placeholder="https://super-site.com"
-                  className="glass-input"
-                />
-              </div>
-              <div>
-                <label className="input-label">
-                  Slug personnalise <span style={{ opacity: 0.5 }}>(optionnel)</span>
-                </label>
-                <input
-                  type="text"
-                  value={customId}
-                  onChange={(e) => setCustomId(e.target.value)}
-                  placeholder="ex: ma-promo"
-                  className="glass-input"
-                />
-              </div>
-
-              <button type="submit" disabled={loading} className="btn btn-primary" style={{ marginTop: '0.5rem', width: '100%', justifyContent: 'center' }}>
-                {loading ? 'Creation...' : 'Creer le lien'}
-              </button>
-            </form>
-            {error && <p style={{ color: '#ef4444', marginTop: '1rem', fontSize: '0.9rem', textAlign: 'center' }}>{error}</p>}
-          </div>
-
-          <div className="glass-card list-panel">
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Vos liens actifs</h2>
-
-            {redirects.length === 0 ? (
-              <div style={{ padding: '3rem', textAlign: 'center', opacity: 0.6, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '300px' }}>
-                <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>Aucun</div>
-                <p>Vous n'avez pas encore de liens.</p>
-              </div>
+        <div className="detail-grid">
+          <article className="card-block">
+            <h3>Top liens</h3>
+            {initialStats.topLinks.length === 0 ? (
+              <p>Aucune performance a afficher.</p>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '600px', overflowY: 'auto', paddingRight: '0.5rem' }} className="custom-scroll">
-                {redirects.map((r) => (
-                  <RedirectItem key={r.id} redirect={r} />
+              <div className="list-wrap">
+                {initialStats.topLinks.map((link) => (
+                  <div key={link.id} className="line-row">
+                    <div>
+                      <p className="mono-link" style={{ marginBottom: '0.18rem' }}>
+                        /{link.id}
+                      </p>
+                      <p className="url-sub">{link.url}</p>
+                    </div>
+                    <strong>{link.clicks} clics</strong>
+                  </div>
                 ))}
               </div>
             )}
-          </div>
+          </article>
+
+          <article className="card-block">
+            <h3>Origine des clics</h3>
+            {initialStats.trafficSources.length === 0 ? (
+              <p>Pas assez de donnees.</p>
+            ) : (
+              <div className="list-wrap">
+                {initialStats.trafficSources.map((row) => (
+                  <div key={row.source} className="line-row">
+                    <span>{formatSourceLabel(row.source)}</span>
+                    <strong>{row.clicks}</strong>
+                  </div>
+                ))}
+              </div>
+            )}
+          </article>
         </div>
       </section>
 
+      <section className="dashboard-grid">
+        <article className="glass-card section-card create-panel">
+          <h2>Creer un nouveau lien</h2>
+          <form onSubmit={handleCreate} className="form-stack">
+            <div>
+              <label className="input-label">Destination URL</label>
+              <input
+                type="url"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                required
+                placeholder="https://example.com"
+              />
+            </div>
+            <div>
+              <label className="input-label">Slug personnalise (optionnel)</label>
+              <input
+                type="text"
+                value={customId}
+                onChange={(e) => setCustomId(e.target.value)}
+                placeholder="ex: ma-campagne"
+              />
+            </div>
+            <button type="submit" disabled={loading} className="btn btn-primary form-btn">
+              {loading ? 'Creation...' : 'Creer le lien'}
+            </button>
+          </form>
+          {error && <p className="error-msg">{error}</p>}
+        </article>
+
+        <article className="glass-card section-card">
+          <h2>Vos liens actifs</h2>
+          {initialRedirects.length === 0 ? (
+            <div className="empty-state">
+              <p>Aucun lien cree pour le moment.</p>
+            </div>
+          ) : (
+            <div className="redirect-list">
+              {initialRedirects.map((redirect) => (
+                <RedirectItem key={redirect.id} redirect={redirect} />
+              ))}
+            </div>
+          )}
+        </article>
+      </section>
+
       <style jsx>{`
+        .dash-layout {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+        }
+
+        .stats-grid,
+        .analytics-grid,
+        .detail-grid {
+          margin-top: 0.9rem;
+          display: grid;
+          gap: 0.75rem;
+        }
+
         .stats-grid {
-          display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 1rem;
         }
 
-        .analytics-grid {
-          display: grid;
-          grid-template-columns: 1.25fr 1fr;
-          gap: 1rem;
+        .analytics-grid,
+        .detail-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
         }
 
-        .stat-card {
-          min-height: 120px;
-        }
-
-        .section-card {
-          padding: 1.25rem;
-        }
-
-        .links-section {
-          order: 1;
-        }
-
-        .stats-section {
-          order: 2;
+        .stat-card,
+        .card-block {
+          border: 1px solid var(--line);
+          border-radius: 12px;
+          background: #fbfdff;
+          padding: 0.9rem;
         }
 
         .stat-label {
+          font-size: 0.82rem;
           color: var(--text-muted);
-          font-size: 0.85rem;
-          margin: 0 0 0.4rem;
+          margin-bottom: 0.35rem;
         }
 
         .stat-value {
-          font-size: 2rem;
-          line-height: 1;
-          margin: 0;
-          font-weight: 700;
+          font-size: 1.75rem;
+          font-family: 'Manrope', sans-serif;
+          color: #0f172a;
         }
 
         .stat-sub {
-          margin: 0.5rem 0 0;
-          opacity: 0.65;
-          font-size: 0.9rem;
+          font-size: 0.88rem;
+          color: var(--text-muted);
+          margin-top: 0.45rem;
+        }
+
+        h2 {
+          font-size: 1.18rem;
+        }
+
+        h3 {
+          font-size: 0.95rem;
+          margin-bottom: 0.72rem;
         }
 
         .bars-row {
           display: grid;
           grid-template-columns: repeat(7, minmax(0, 1fr));
-          gap: 0.5rem;
+          gap: 0.45rem;
           align-items: end;
-          min-height: 180px;
+          min-height: 150px;
         }
 
         .bar-col {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 0.3rem;
+          gap: 0.18rem;
         }
 
         .bar-wrap {
-          height: 140px;
+          height: 122px;
           display: flex;
-          align-items: flex-end;
+          align-items: end;
         }
 
         .bar {
-          width: 100%;
-          min-width: 22px;
-          border-radius: 10px 10px 4px 4px;
-          background: linear-gradient(180deg, #22d3ee 0%, #0891b2 100%);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          width: 20px;
+          border-radius: 8px 8px 3px 3px;
+          background: linear-gradient(180deg, #60a5fa 0%, #2563eb 100%);
         }
 
         .bar-count {
-          font-size: 0.8rem;
-          opacity: 0.9;
+          font-size: 0.74rem;
+          color: #1f2937;
         }
 
         .bar-label {
-          font-size: 0.72rem;
-          opacity: 0.6;
+          font-size: 0.7rem;
           text-transform: uppercase;
+          color: var(--text-muted);
+        }
+
+        .activity-list,
+        .list-wrap {
+          display: flex;
+          flex-direction: column;
+          gap: 0.45rem;
+        }
+
+        .activity-item,
+        .line-row {
+          border-bottom: 1px solid var(--line);
+          padding-bottom: 0.45rem;
+          display: flex;
+          justify-content: space-between;
+          gap: 0.65rem;
+          font-size: 0.9rem;
+        }
+
+        .mono-link {
+          color: #1e40af;
+          font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+          font-weight: 700;
+        }
+
+        .url-sub {
+          color: var(--text-muted);
+          font-size: 0.82rem;
+          max-width: 420px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
 
         .dashboard-grid {
           display: grid;
-          grid-template-columns: 380px 1fr;
-          gap: 2rem;
+          grid-template-columns: 340px 1fr;
+          gap: 1rem;
           align-items: start;
         }
 
-        .glass-input {
-          background: rgba(0, 0, 0, 0.2);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 0.5rem;
-          padding: 0.75rem;
-          color: white;
-          width: 100%;
-          transition: all 0.2s;
+        .create-panel {
+          position: sticky;
+          top: 92px;
         }
 
-        .glass-input:focus {
-          border-color: var(--primary);
-          background: rgba(0, 0, 0, 0.4);
-          outline: none;
+        .form-stack {
+          margin-top: 0.9rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.88rem;
         }
 
         .input-label {
           display: block;
-          margin-bottom: 0.5rem;
-          font-size: 0.85rem;
+          font-size: 0.84rem;
           color: var(--text-muted);
+          margin-bottom: 0.44rem;
         }
 
-        .custom-scroll::-webkit-scrollbar {
-          width: 6px;
+        .form-btn {
+          margin-top: 0.12rem;
+          width: 100%;
         }
 
-        .custom-scroll::-webkit-scrollbar-track {
-          background: transparent;
+        .error-msg {
+          color: var(--danger);
+          margin-top: 0.8rem;
+          font-size: 0.86rem;
         }
 
-        .custom-scroll::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.1);
-          border-radius: 3px;
+        .empty-state {
+          border: 1px dashed var(--line-strong);
+          border-radius: 12px;
+          background: #fbfdff;
+          min-height: 180px;
+          display: grid;
+          place-items: center;
+          margin-top: 0.8rem;
+          text-align: center;
+          padding: 1rem;
         }
 
-        .custom-scroll::-webkit-scrollbar-thumb:hover {
-          background: rgba(255, 255, 255, 0.2);
+        .redirect-list {
+          margin-top: 0.8rem;
+          max-height: 740px;
+          overflow-y: auto;
+          display: flex;
+          flex-direction: column;
+          gap: 0.65rem;
         }
 
         @media (max-width: 1200px) {
           .stats-grid,
-          .analytics-grid {
+          .analytics-grid,
+          .detail-grid {
             grid-template-columns: 1fr;
           }
         }
 
-        @media (max-width: 1024px) {
+        @media (max-width: 960px) {
           .dashboard-grid {
             grid-template-columns: 1fr;
+          }
+
+          .create-panel {
+            position: static;
           }
         }
       `}</style>
@@ -485,8 +529,8 @@ function RedirectItem({ redirect }: { redirect: Redirect }) {
       const btn = document.getElementById(`copy-${redirect.id}`);
       if (btn) {
         const original = btn.innerText;
-        btn.innerText = 'Copie !';
-        setTimeout(() => (btn.innerText = original), 2000);
+        btn.innerText = 'Copie';
+        setTimeout(() => (btn.innerText = original), 1500);
       }
     } catch {
       alert('Erreur copie');
@@ -514,119 +558,61 @@ function RedirectItem({ redirect }: { redirect: Redirect }) {
   };
 
   return (
-    <div
-      style={{
-        background: 'rgba(255,255,255,0.03)',
-        border: '1px solid rgba(255,255,255,0.05)',
-        borderRadius: '16px',
-        padding: '1.25rem',
-        transition: 'background 0.2s',
-      }}
-      className="redirect-row"
-    >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
-        <div style={{ flex: 1, minWidth: '200px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-            <a
-              href={`/redirect/${redirect.id}`}
-              target="_blank"
-              style={{
-                color: 'var(--accent)',
-                fontWeight: 700,
-                fontSize: '1.1rem',
-                fontFamily: 'monospace',
-                textDecoration: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-              }}
-            >
+    <div className="link-card">
+      <div className="top-row">
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="title-row">
+            <a href={`/redirect/${redirect.id}`} target="_blank" className="slug-link" rel="noreferrer">
               /{redirect.id}
-              <span style={{ fontSize: '0.8rem', opacity: 0.5 }}>open</span>
             </a>
-            <span
-              style={{
-                fontSize: '0.75rem',
-                background: 'rgba(255,255,255,0.1)',
-                padding: '0.2rem 0.6rem',
-                borderRadius: '99px',
-                color: 'var(--text-muted)',
-              }}
-            >
-              {redirect.clicks} clics
-            </span>
+            <span className="click-pill">{redirect.clicks} clics</span>
           </div>
 
           {isEditing ? (
-            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+            <div className="edit-row">
               <input
                 type="url"
                 value={editUrl}
                 onChange={(e) => setEditUrl(e.target.value)}
-                className="glass-input"
-                style={{ padding: '0.4rem', fontSize: '0.9rem', width: 'auto', flex: 1 }}
+                style={{ flex: 1 }}
               />
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button onClick={handleSave} disabled={isSaving} className="btn btn-primary" style={{ padding: '0.4rem 1rem', fontSize: '0.8rem' }}>
-                  OK
-                </button>
-                <button onClick={() => setIsEditing(false)} className="btn btn-glass" style={{ padding: '0.4rem 1rem', fontSize: '0.8rem' }}>
-                  X
-                </button>
-              </div>
+              <button onClick={handleSave} disabled={isSaving} className="btn btn-primary mini-btn" type="button">
+                OK
+              </button>
+              <button onClick={() => setIsEditing(false)} className="btn btn-soft mini-btn" type="button">
+                Annuler
+              </button>
             </div>
           ) : (
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', wordBreak: 'break-all', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ opacity: 0.5 }}>-{'>'}</span>
-              {redirect.url}
-              <button onClick={() => setIsEditing(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: 0.5, padding: '2px' }} title="Modifier">
-                Edit
+            <div className="url-line">
+              <span>{redirect.url}</span>
+              <button onClick={() => setIsEditing(true)} className="btn btn-soft mini-btn" type="button">
+                Modifier
               </button>
             </div>
           )}
         </div>
 
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <button id={`copy-${redirect.id}`} onClick={copyToClipboard} className="btn btn-glass" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>
+        <div className="action-row">
+          <button id={`copy-${redirect.id}`} onClick={copyToClipboard} className="btn btn-soft mini-btn" type="button">
             Copier
           </button>
-          <button
-            onClick={toggleStats}
-            className="btn btn-glass"
-            style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
-            title="Voir les stats individuelles"
-          >
+          <button onClick={toggleStats} className="btn btn-soft mini-btn" type="button">
             Stats
           </button>
-          <button
-            onClick={() => setShowQr(!showQr)}
-            className="btn btn-glass"
-            style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
-            title="Voir le QR Code"
-          >
+          <button onClick={() => setShowQr((prev) => !prev)} className="btn btn-soft mini-btn" type="button">
             QR
           </button>
-          <button
-            onClick={handleDelete}
-            style={{
-              background: 'transparent',
-              border: '1px solid rgba(239, 68, 68, 0.3)',
-              color: '#ef4444',
-              padding: '0.5rem 1rem',
-              borderRadius: '99px',
-              cursor: 'pointer',
-              fontSize: '0.85rem',
-            }}
-          >
-            Suppr.
+          <button onClick={handleDelete} className="btn btn-danger mini-btn" type="button">
+            Supprimer
           </button>
         </div>
       </div>
 
       {showQr && (
-        <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--glass-border)', textAlign: 'center', animation: 'fadeIn 0.3s ease' }}>
-          <p style={{ marginBottom: '1rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Scan pour acceder au lien</p>
-          <div style={{ background: 'white', padding: '1rem', borderRadius: '1rem', display: 'inline-block' }}>
+        <div className="expand-block">
+          <p className="expand-label">QR du lien</p>
+          <div className="qr-wrap">
             <img
               src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(
                 `${typeof window !== 'undefined' ? window.location.origin : ''}/redirect/${redirect.id}`,
@@ -639,27 +625,27 @@ function RedirectItem({ redirect }: { redirect: Redirect }) {
       )}
 
       {showStats && (
-        <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--glass-border)' }}>
+        <div className="expand-block">
           {statsLoading ? (
-            <p style={{ opacity: 0.7 }}>Chargement des stats...</p>
+            <p>Chargement des stats...</p>
           ) : !linkStats ? (
-            <p style={{ opacity: 0.7 }}>Aucune stat disponible.</p>
+            <p>Aucune stat disponible.</p>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '0.75rem' }}>
-                <h4 style={{ margin: '0 0 0.75rem', fontSize: '0.95rem' }}>Resume du lien</h4>
-                <p style={{ margin: '0.25rem 0', fontSize: '0.9rem' }}>Total: <strong>{linkStats.totals.clicks}</strong></p>
-                <p style={{ margin: '0.25rem 0', fontSize: '0.9rem' }}>24h: <strong>{linkStats.totals.last24h}</strong></p>
-                <p style={{ margin: '0.25rem 0', fontSize: '0.9rem' }}>7 jours: <strong>{linkStats.totals.last7d}</strong></p>
+            <div className="stats-box-grid">
+              <div className="mini-card">
+                <h4>Resume</h4>
+                <p>Total: <strong>{linkStats.totals.clicks}</strong></p>
+                <p>24h: <strong>{linkStats.totals.last24h}</strong></p>
+                <p>7 jours: <strong>{linkStats.totals.last7d}</strong></p>
               </div>
 
-              <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '0.75rem' }}>
-                <h4 style={{ margin: '0 0 0.75rem', fontSize: '0.95rem' }}>Origine</h4>
+              <div className="mini-card">
+                <h4>Origine</h4>
                 {linkStats.trafficSources.length === 0 ? (
-                  <p style={{ margin: 0, opacity: 0.7 }}>Aucune source</p>
+                  <p>Aucune source</p>
                 ) : (
                   linkStats.trafficSources.map((row) => (
-                    <div key={row.source} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.88rem', marginBottom: '0.35rem' }}>
+                    <div key={row.source} className="mini-line">
                       <span>{formatSourceLabel(row.source)}</span>
                       <strong>{row.clicks}</strong>
                     </div>
@@ -667,36 +653,32 @@ function RedirectItem({ redirect }: { redirect: Redirect }) {
                 )}
               </div>
 
-              <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '0.75rem' }}>
-                <h4 style={{ margin: '0 0 0.75rem', fontSize: '0.95rem' }}>Referers</h4>
+              <div className="mini-card">
+                <h4>Referers</h4>
                 {linkStats.topReferrers.length === 0 ? (
-                  <p style={{ margin: 0, opacity: 0.7 }}>Aucun referer externe</p>
+                  <p>Aucun referer externe</p>
                 ) : (
                   linkStats.topReferrers.map((row) => (
-                    <div key={row.referrer_host} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.88rem', marginBottom: '0.35rem', gap: '0.5rem' }}>
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.referrer_host}</span>
+                    <div key={row.referrer_host} className="mini-line">
+                      <span className="ellipsis">{row.referrer_host}</span>
                       <strong>{row.clicks}</strong>
                     </div>
                   ))
                 )}
               </div>
 
-              <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '0.75rem' }}>
-                <h4 style={{ margin: '0 0 0.75rem', fontSize: '0.95rem' }}>7 jours</h4>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: '0.35rem', alignItems: 'end', minHeight: '80px' }}>
+              <div className="mini-card">
+                <h4>7 jours</h4>
+                <div className="mini-bars">
                   {linkStats.clicksLast7Days.map((point) => {
                     const localMax = Math.max(...linkStats.clicksLast7Days.map((d) => d.clicks), 1);
                     return (
-                      <div key={point.date} style={{ textAlign: 'center' }}>
+                      <div key={point.date}>
                         <div
-                          style={{
-                            height: `${Math.max((point.clicks / localMax) * 50, point.clicks > 0 ? 8 : 3)}px`,
-                            borderRadius: '6px 6px 2px 2px',
-                            background: 'linear-gradient(180deg, #34d399 0%, #059669 100%)',
-                            marginBottom: '0.2rem',
-                          }}
+                          className="mini-bar"
+                          style={{ height: `${Math.max((point.clicks / localMax) * 45, point.clicks > 0 ? 7 : 2)}px` }}
                         />
-                        <div style={{ fontSize: '0.65rem', opacity: 0.65 }}>{formatDayLabel(point.date)}</div>
+                        <div className="mini-day">{formatDayLabel(point.date)}</div>
                       </div>
                     );
                   })}
@@ -706,6 +688,161 @@ function RedirectItem({ redirect }: { redirect: Redirect }) {
           )}
         </div>
       )}
+
+      <style jsx>{`
+        .link-card {
+          border: 1px solid var(--line);
+          border-radius: 12px;
+          background: #fbfdff;
+          padding: 0.88rem;
+        }
+
+        .top-row {
+          display: flex;
+          justify-content: space-between;
+          gap: 0.8rem;
+          flex-wrap: wrap;
+        }
+
+        .title-row {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
+        .slug-link {
+          color: #1e40af;
+          font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+          font-weight: 700;
+        }
+
+        .click-pill {
+          border-radius: 999px;
+          background: #edf2f7;
+          color: #405266;
+          padding: 0.2rem 0.52rem;
+          font-size: 0.76rem;
+          font-weight: 600;
+        }
+
+        .url-line {
+          margin-top: 0.45rem;
+          display: flex;
+          gap: 0.5rem;
+          align-items: flex-start;
+        }
+
+        .url-line span {
+          color: var(--text-muted);
+          font-size: 0.9rem;
+          word-break: break-all;
+          flex: 1;
+        }
+
+        .edit-row {
+          margin-top: 0.45rem;
+          display: flex;
+          gap: 0.45rem;
+          flex-wrap: wrap;
+        }
+
+        .action-row {
+          display: flex;
+          gap: 0.35rem;
+          flex-wrap: wrap;
+          align-items: center;
+        }
+
+        .mini-btn {
+          padding: 0.42rem 0.75rem;
+          font-size: 0.78rem;
+        }
+
+        .expand-block {
+          margin-top: 0.8rem;
+          border-top: 1px solid var(--line);
+          padding-top: 0.8rem;
+        }
+
+        .expand-label {
+          margin-bottom: 0.55rem;
+          font-size: 0.82rem;
+        }
+
+        .qr-wrap {
+          display: inline-block;
+          background: #fff;
+          border: 1px solid var(--line);
+          border-radius: 10px;
+          padding: 0.5rem;
+        }
+
+        .stats-box-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 0.5rem;
+        }
+
+        .mini-card {
+          border: 1px solid var(--line);
+          border-radius: 10px;
+          padding: 0.6rem;
+          background: #fff;
+          font-size: 0.86rem;
+        }
+
+        .mini-card h4 {
+          font-size: 0.88rem;
+          margin-bottom: 0.42rem;
+        }
+
+        .mini-card p {
+          font-size: 0.84rem;
+          color: var(--text-muted);
+          margin-bottom: 0.2rem;
+        }
+
+        .mini-line {
+          display: flex;
+          justify-content: space-between;
+          gap: 0.4rem;
+          margin-bottom: 0.2rem;
+          font-size: 0.84rem;
+        }
+
+        .ellipsis {
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          overflow: hidden;
+        }
+
+        .mini-bars {
+          min-height: 64px;
+          display: grid;
+          grid-template-columns: repeat(7, minmax(0, 1fr));
+          gap: 0.25rem;
+          align-items: end;
+        }
+
+        .mini-bar {
+          background: linear-gradient(180deg, #93c5fd 0%, #2563eb 100%);
+          border-radius: 4px 4px 2px 2px;
+        }
+
+        .mini-day {
+          margin-top: 0.12rem;
+          font-size: 0.56rem;
+          text-align: center;
+          color: var(--text-muted);
+        }
+
+        @media (max-width: 760px) {
+          .stats-box-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+      `}</style>
     </div>
   );
 }
+
