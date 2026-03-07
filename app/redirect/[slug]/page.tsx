@@ -3,33 +3,67 @@ import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import RedirectPageClient from './RedirectPageClient';
 
-function getSourceType(referrerHost: string | null): string {
-    if (!referrerHost) return 'direct';
+function parseHost(rawUrl: string | null): string | null {
+    if (!rawUrl) return null;
+    try {
+        return new URL(rawUrl).hostname.toLowerCase();
+    } catch {
+        return null;
+    }
+}
 
-    const host = referrerHost.toLowerCase();
-    if (
-        host.includes('google.') ||
-        host.includes('bing.') ||
-        host.includes('duckduckgo.') ||
-        host.includes('yahoo.')
-    ) {
-        return 'search';
+function getSourceType({
+    referrerHost,
+    originHost,
+    secFetchSite,
+    currentHost,
+}: {
+    referrerHost: string | null;
+    originHost: string | null;
+    secFetchSite: string | null;
+    currentHost: string | null;
+}): string {
+    const host = (referrerHost || originHost || '').toLowerCase();
+    const localHost = (currentHost || '').toLowerCase();
+
+    if (host) {
+        if (localHost && (host === localHost || host.endsWith(`.${localHost}`))) {
+            return 'internal';
+        }
+
+        if (
+            host.includes('google.') ||
+            host.includes('bing.') ||
+            host.includes('duckduckgo.') ||
+            host.includes('yahoo.')
+        ) {
+            return 'search';
+        }
+
+        if (
+            host.includes('x.com') ||
+            host.includes('twitter.com') ||
+            host.includes('facebook.com') ||
+            host.includes('instagram.com') ||
+            host.includes('tiktok.com') ||
+            host.includes('linkedin.com') ||
+            host.includes('reddit.com') ||
+            host.includes('youtube.com')
+        ) {
+            return 'social';
+        }
+
+        return 'referral';
     }
 
-    if (
-        host.includes('x.com') ||
-        host.includes('twitter.com') ||
-        host.includes('facebook.com') ||
-        host.includes('instagram.com') ||
-        host.includes('tiktok.com') ||
-        host.includes('linkedin.com') ||
-        host.includes('reddit.com') ||
-        host.includes('youtube.com')
-    ) {
-        return 'social';
+    if (secFetchSite === 'same-origin' || secFetchSite === 'same-site') {
+        return 'internal';
+    }
+    if (secFetchSite === 'cross-site') {
+        return 'referral';
     }
 
-    return 'referral';
+    return 'direct';
 }
 
 export default async function RedirectPage({
@@ -49,19 +83,15 @@ export default async function RedirectPage({
         await initDb();
         const headerStore = await headers();
         const referer = headerStore.get('referer');
+        const origin = headerStore.get('origin');
+        const secFetchSite = headerStore.get('sec-fetch-site');
+        const currentHost = headerStore.get('host');
         const userAgent = headerStore.get('user-agent');
         const countryCode = headerStore.get('x-vercel-ip-country') || headerStore.get('cf-ipcountry');
 
-        let referrerHost: string | null = null;
-        if (referer) {
-            try {
-                referrerHost = new URL(referer).hostname;
-            } catch {
-                referrerHost = null;
-            }
-        }
-
-        const sourceType = getSourceType(referrerHost);
+        const referrerHost = parseHost(referer);
+        const originHost = parseHost(origin);
+        const sourceType = getSourceType({ referrerHost, originHost, secFetchSite, currentHost });
 
         const { rows } = await sql`SELECT url FROM redirects WHERE id = ${slug}`;
         const redirectData = rows[0] as { url: string } | undefined;

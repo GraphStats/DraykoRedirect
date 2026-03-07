@@ -10,8 +10,9 @@ function formatDayLabel(date: string) {
 }
 
 function formatSourceLabel(source: string | null) {
-  if (!source) return 'unknown';
+  if (!source || source === 'unknown') return 'direct';
   if (source === 'direct') return 'direct';
+  if (source === 'internal') return 'interne';
   if (source === 'social') return 'social';
   if (source === 'search') return 'search';
   if (source === 'referral') return 'site externe';

@@ -210,12 +210,12 @@ export async function getUserRedirectStats(): Promise<UserDashboardStats> {
 
         const { rows: trafficSourcesRows } = await sql`
       SELECT
-        COALESCE(e.source_type, 'unknown') AS source,
+        COALESCE(NULLIF(NULLIF(e.source_type, ''), 'unknown'), 'direct') AS source,
         COUNT(*)::int AS clicks
       FROM redirect_click_events e
       INNER JOIN redirects r ON r.id = e.redirect_id
       WHERE r.user_id = ${userId}
-      GROUP BY COALESCE(e.source_type, 'unknown')
+      GROUP BY COALESCE(NULLIF(NULLIF(e.source_type, ''), 'unknown'), 'direct')
       ORDER BY clicks DESC
       LIMIT 6
     `;
@@ -345,11 +345,11 @@ export async function getUserRedirectLinkStats(id: string): Promise<UserLinkStat
 
         const { rows: trafficSourcesRows } = await sql`
       SELECT
-        COALESCE(source_type, 'unknown') AS source,
+        COALESCE(NULLIF(NULLIF(source_type, ''), 'unknown'), 'direct') AS source,
         COUNT(*)::int AS clicks
       FROM redirect_click_events
       WHERE redirect_id = ${id}
-      GROUP BY COALESCE(source_type, 'unknown')
+      GROUP BY COALESCE(NULLIF(NULLIF(source_type, ''), 'unknown'), 'direct')
       ORDER BY clicks DESC
       LIMIT 6
     `;
