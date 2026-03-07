@@ -18,6 +18,18 @@ function formatSourceLabel(source: string | null) {
   return source;
 }
 
+function buildLinePoints(values: number[], maxValue: number, width: number, height: number, pad: number) {
+  const safeMax = Math.max(maxValue, 1);
+  const step = values.length > 1 ? (width - pad * 2) / (values.length - 1) : 0;
+  return values
+    .map((value, index) => {
+      const x = pad + step * index;
+      const y = height - pad - (value / safeMax) * (height - pad * 2);
+      return `${x},${y}`;
+    })
+    .join(' ');
+}
+
 export default async function LinkStatsPage({ params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth();
   if (!userId) {
@@ -31,6 +43,13 @@ export default async function LinkStatsPage({ params }: { params: Promise<{ id: 
   }
 
   const maxDailyClicks = Math.max(...stats.clicksLast7Days.map((d) => d.clicks), 1);
+  const waitMax = Math.max(...stats.waitLast7Days.flatMap((d) => [d.stayed, d.left]), 1);
+  const stayedValues = stats.waitLast7Days.map((d) => d.stayed);
+  const leftValues = stats.waitLast7Days.map((d) => d.left);
+  const stayedPoints = buildLinePoints(stayedValues, waitMax, 520, 180, 16);
+  const leftPoints = buildLinePoints(leftValues, waitMax, 520, 180, 16);
+  const totalDecisions = stats.totals.stayedUntilRedirect + stats.totals.leftBeforeRedirect;
+  const stayedRatio = totalDecisions > 0 ? Math.round((stats.totals.stayedUntilRedirect / totalDecisions) * 1000) / 10 : 0;
 
   return (
     <main className="dashboard-container">
@@ -112,6 +131,34 @@ export default async function LinkStatsPage({ params }: { params: Promise<{ id: 
               )}
             </article>
           </div>
+
+          <article className="card-block">
+            <div className="trend-head">
+              <h3>Tendance attente / abandon (7 jours)</h3>
+              <span className="ratio-pill">Ratio reste: {stayedRatio}%</span>
+            </div>
+            <div className="line-chart-wrap">
+              <svg viewBox="0 0 520 180" className="line-chart" role="img" aria-label="Graphique attente et abandon">
+                <polyline points={stayedPoints} className="line-stayed" />
+                <polyline points={leftPoints} className="line-left" />
+              </svg>
+              <div className="x-axis-labels">
+                {stats.waitLast7Days.map((point) => (
+                  <span key={point.date}>{formatDayLabel(point.date)}</span>
+                ))}
+              </div>
+            </div>
+            <div className="legend-row">
+              <span className="legend-item">
+                <i className="legend-dot stayed" />
+                Restent jusqu'a la redirection
+              </span>
+              <span className="legend-item">
+                <i className="legend-dot left" />
+                Partent avant la redirection
+              </span>
+            </div>
+          </article>
 
           <article className="card-block">
             <h3>Clics sur 7 jours</h3>
@@ -208,6 +255,96 @@ export default async function LinkStatsPage({ params }: { params: Promise<{ id: 
           display: flex;
           flex-direction: column;
           gap: 0.45rem;
+        }
+
+        .trend-head {
+          display: flex;
+          justify-content: space-between;
+          gap: 0.7rem;
+          flex-wrap: wrap;
+          margin-bottom: 0.72rem;
+        }
+
+        .ratio-pill {
+          border-radius: 999px;
+          background: #ecfdf3;
+          color: #166534;
+          border: 1px solid #bbf7d0;
+          padding: 0.25rem 0.58rem;
+          font-size: 0.78rem;
+          font-weight: 700;
+        }
+
+        .line-chart-wrap {
+          border: 1px solid var(--line);
+          border-radius: 10px;
+          background: #fff;
+          padding: 0.55rem;
+        }
+
+        .line-chart {
+          width: 100%;
+          height: 180px;
+          display: block;
+          background-image: linear-gradient(to bottom, transparent 24%, #eef2f7 25%, transparent 26%);
+          background-size: 100% 45px;
+          border-radius: 8px;
+        }
+
+        .line-stayed,
+        .line-left {
+          fill: none;
+          stroke-width: 3;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+        }
+
+        .line-stayed {
+          stroke: #16a34a;
+        }
+
+        .line-left {
+          stroke: #dc2626;
+        }
+
+        .x-axis-labels {
+          margin-top: 0.4rem;
+          display: grid;
+          grid-template-columns: repeat(7, minmax(0, 1fr));
+          text-align: center;
+          font-size: 0.7rem;
+          color: var(--text-muted);
+          text-transform: uppercase;
+        }
+
+        .legend-row {
+          margin-top: 0.62rem;
+          display: flex;
+          gap: 1rem;
+          flex-wrap: wrap;
+          font-size: 0.83rem;
+          color: var(--text-muted);
+        }
+
+        .legend-item {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.35rem;
+        }
+
+        .legend-dot {
+          width: 10px;
+          height: 10px;
+          border-radius: 999px;
+          display: inline-block;
+        }
+
+        .legend-dot.stayed {
+          background: #16a34a;
+        }
+
+        .legend-dot.left {
+          background: #dc2626;
         }
 
         .line-row {

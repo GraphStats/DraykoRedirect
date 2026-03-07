@@ -47,6 +47,11 @@ export interface UserLinkStats {
         date: string;
         clicks: number;
     }>;
+    waitLast7Days: Array<{
+        date: string;
+        stayed: number;
+        left: number;
+    }>;
     trafficSources: Array<{
         source: string;
         clicks: number;
@@ -317,6 +322,27 @@ export async function getUserRedirectLinkStats(id: string): Promise<UserLinkStat
       ORDER BY days.day ASC
     `;
 
+        const { rows: waitLast7DaysRows } = await sql`
+      WITH days AS (
+        SELECT generate_series(
+          CURRENT_DATE - INTERVAL '6 days',
+          CURRENT_DATE,
+          INTERVAL '1 day'
+        )::date AS day
+      )
+      SELECT
+        TO_CHAR(days.day, 'YYYY-MM-DD') AS date,
+        COALESCE(COUNT(e.id) FILTER (WHERE e.status = 'completed'), 0)::int AS stayed,
+        COALESCE(COUNT(e.id) FILTER (WHERE e.status = 'abandoned'), 0)::int AS left
+      FROM days
+      LEFT JOIN redirect_wait_events e
+        ON e.updated_at >= days.day
+       AND e.updated_at < days.day + INTERVAL '1 day'
+       AND e.redirect_id = ${id}
+      GROUP BY days.day
+      ORDER BY days.day ASC
+    `;
+
         const { rows: trafficSourcesRows } = await sql`
       SELECT
         COALESCE(source_type, 'unknown') AS source,
@@ -352,6 +378,7 @@ export async function getUserRedirectLinkStats(id: string): Promise<UserLinkStat
                 leftBeforeRedirect: waitTotals?.left_before_redirect ?? 0,
             },
             clicksLast7Days: clicksLast7DaysRows as Array<{ date: string; clicks: number }>,
+            waitLast7Days: waitLast7DaysRows as Array<{ date: string; stayed: number; left: number }>,
             trafficSources: trafficSourcesRows as Array<{ source: string; clicks: number }>,
             topReferrers: topReferrersRows as Array<{ referrer_host: string; clicks: number }>,
         };
@@ -365,6 +392,7 @@ export async function getUserRedirectLinkStats(id: string): Promise<UserLinkStat
                 leftBeforeRedirect: 0,
             },
             clicksLast7Days: [],
+            waitLast7Days: [],
             trafficSources: [],
             topReferrers: [],
         };
