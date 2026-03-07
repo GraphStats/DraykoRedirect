@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useState } from 'react';
 import {
   createUserRedirect,
@@ -603,20 +602,20 @@ function RedirectItem({ redirect }: { redirect: Redirect }) {
           ) : (
             <div className="url-line">
               <span>{redirect.url}</span>
-              <button onClick={() => setIsEditing(true)} className="btn btn-soft mini-btn" type="button">
-                Modifier
-              </button>
             </div>
           )}
         </div>
 
         <div className="action-row">
+          <button onClick={() => setIsEditing(true)} className="btn btn-soft mini-btn" type="button">
+            Modifier
+          </button>
           <button id={`copy-${redirect.id}`} onClick={copyToClipboard} className="btn btn-soft mini-btn" type="button">
             Copier
           </button>
-          <Link href={`/dashboard/link/${redirect.id}`} className="btn btn-soft mini-btn">
+          <a href={`/dashboard/link/${redirect.id}`} className="btn btn-soft mini-btn">
             Stats
-          </Link>
+          </a>
           <button onClick={() => setShowQr((prev) => !prev)} className="btn btn-soft mini-btn" type="button">
             QR
           </button>
