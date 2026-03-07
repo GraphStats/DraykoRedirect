@@ -67,14 +67,26 @@ export default async function RedirectPage({
         const redirectData = rows[0] as { url: string } | undefined;
 
         if (redirectData) {
+            const eventToken = `${slug}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+            let trackedToken = '';
+
             // Increment clicks immediately when the page is loaded
             await sql`UPDATE redirects SET clicks = clicks + 1 WHERE id = ${slug}`;
             await sql`
               INSERT INTO redirect_click_events (redirect_id, referrer_host, source_type, country_code, user_agent)
               VALUES (${slug}, ${referrerHost}, ${sourceType}, ${countryCode}, ${userAgent})
             `;
+            try {
+                await sql`
+                  INSERT INTO redirect_wait_events (redirect_id, event_token, status)
+                  VALUES (${slug}, ${eventToken}, 'pending')
+                `;
+                trackedToken = eventToken;
+            } catch (trackingError) {
+                console.error('Redirect wait tracking insert failed:', trackingError);
+            }
 
-            return <RedirectPageClient url={redirectData.url} />;
+            return <RedirectPageClient url={redirectData.url} eventToken={trackedToken} />;
         }
     } catch (error) {
         console.error('Redirect error:', error);

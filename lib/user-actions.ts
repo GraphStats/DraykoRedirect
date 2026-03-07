@@ -40,6 +40,8 @@ export interface UserLinkStats {
         clicks: number;
         last24h: number;
         last7d: number;
+        stayedUntilRedirect: number;
+        leftBeforeRedirect: number;
     };
     clicksLast7Days: Array<{
         date: string;
@@ -53,6 +55,13 @@ export interface UserLinkStats {
         referrer_host: string;
         clicks: number;
     }>;
+}
+
+export interface UserRedirectItem {
+    id: string;
+    url: string;
+    clicks: number;
+    created_at?: string;
 }
 
 export async function createUserRedirect(url: string, customId?: string) {
@@ -100,6 +109,30 @@ export async function getUserRedirects() {
         }
         console.error('Get redirects error:', error);
         return [];
+    }
+}
+
+export async function getUserRedirectById(id: string): Promise<UserRedirectItem | null> {
+    const { userId } = await auth();
+    if (!userId) throw new Error('Unauthorized');
+
+    try {
+        await initDb();
+        const { rows } = await sql`
+      SELECT id, url, clicks, created_at
+      FROM redirects
+      WHERE user_id = ${userId} AND id = ${id}
+      LIMIT 1
+    `;
+
+        if (rows.length === 0) return null;
+        return rows[0] as UserRedirectItem;
+    } catch (error: any) {
+        if (error.message?.includes('relation "redirects" does not exist')) {
+            await initDb();
+            return null;
+        }
+        return null;
     }
 }
 
@@ -256,6 +289,14 @@ export async function getUserRedirectLinkStats(id: string): Promise<UserLinkStat
       WHERE redirect_id = ${id}
     `;
 
+        const { rows: waitRows } = await sql`
+      SELECT
+        COUNT(*) FILTER (WHERE status = 'completed')::int AS stayed_until_redirect,
+        COUNT(*) FILTER (WHERE status = 'abandoned')::int AS left_before_redirect
+      FROM redirect_wait_events
+      WHERE redirect_id = ${id}
+    `;
+
         const { rows: clicksLast7DaysRows } = await sql`
       WITH days AS (
         SELECT generate_series(
@@ -300,12 +341,15 @@ export async function getUserRedirectLinkStats(id: string): Promise<UserLinkStat
     `;
 
         const totals = totalsRows[0] as { clicks: number; last24h: number; last7d: number } | undefined;
+        const waitTotals = waitRows[0] as { stayed_until_redirect: number; left_before_redirect: number } | undefined;
 
         return {
             totals: {
                 clicks: totals?.clicks ?? 0,
                 last24h: totals?.last24h ?? 0,
                 last7d: totals?.last7d ?? 0,
+                stayedUntilRedirect: waitTotals?.stayed_until_redirect ?? 0,
+                leftBeforeRedirect: waitTotals?.left_before_redirect ?? 0,
             },
             clicksLast7Days: clicksLast7DaysRows as Array<{ date: string; clicks: number }>,
             trafficSources: trafficSourcesRows as Array<{ source: string; clicks: number }>,
@@ -317,6 +361,8 @@ export async function getUserRedirectLinkStats(id: string): Promise<UserLinkStat
                 clicks: 0,
                 last24h: 0,
                 last7d: 0,
+                stayedUntilRedirect: 0,
+                leftBeforeRedirect: 0,
             },
             clicksLast7Days: [],
             trafficSources: [],

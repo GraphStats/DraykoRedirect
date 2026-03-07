@@ -2,21 +2,63 @@
 
 import { useEffect, useState } from 'react';
 
-export default function RedirectPageClient({ url }: { url: string }) {
+type RedirectEventStatus = 'completed' | 'abandoned';
+
+export default function RedirectPageClient({ url, eventToken }: { url: string; eventToken: string }) {
   const [countdown, setCountdown] = useState(5);
 
   useEffect(() => {
+    let finalEventSent = false;
+    let redirectStarted = false;
+
+    const sendStatus = (status: RedirectEventStatus) => {
+      if (!eventToken) return;
+      if (finalEventSent) return;
+      finalEventSent = true;
+
+      const payload = JSON.stringify({ eventToken, status });
+      const blob = new Blob([payload], { type: 'application/json' });
+      const sent = navigator.sendBeacon('/api/redirect-events', blob);
+      if (!sent) {
+        fetch('/api/redirect-events', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: payload,
+          keepalive: true,
+        }).catch(() => {});
+      }
+    };
+
+    const onPageHide = () => {
+      if (!redirectStarted) {
+        sendStatus('abandoned');
+      }
+    };
+
+    window.addEventListener('pagehide', onPageHide);
+
     if (countdown <= 0) {
-      window.location.href = url;
-      return;
+      redirectStarted = true;
+      sendStatus('completed');
+      const timer = setTimeout(() => {
+        window.location.href = url;
+      }, 40);
+
+      return () => {
+        clearTimeout(timer);
+        window.removeEventListener('pagehide', onPageHide);
+      };
     }
 
     const timer = setInterval(() => {
       setCountdown((prev) => prev - 1);
     }, 1000);
 
-    return () => clearInterval(timer);
-  }, [countdown, url]);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('pagehide', onPageHide);
+    };
+  }, [countdown, eventToken, url]);
 
   return (
     <main className="redirect-interpage">

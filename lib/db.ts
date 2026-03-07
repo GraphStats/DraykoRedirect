@@ -36,6 +36,24 @@ export async function initDb() {
         await sql`CREATE INDEX IF NOT EXISTS redirect_click_events_clicked_at_idx ON redirect_click_events(clicked_at)`;
         await sql`CREATE INDEX IF NOT EXISTS redirect_click_events_source_type_idx ON redirect_click_events(source_type)`;
         await sql`CREATE INDEX IF NOT EXISTS redirect_click_events_referrer_host_idx ON redirect_click_events(referrer_host)`;
+        await sql`
+      CREATE TABLE IF NOT EXISTS redirect_wait_events (
+        id BIGSERIAL PRIMARY KEY,
+        redirect_id TEXT NOT NULL REFERENCES redirects(id) ON DELETE CASCADE,
+        event_token TEXT NOT NULL UNIQUE,
+        status TEXT NOT NULL DEFAULT 'pending',
+        started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+        await sql`ALTER TABLE redirect_wait_events ADD COLUMN IF NOT EXISTS redirect_id TEXT`;
+        await sql`ALTER TABLE redirect_wait_events ADD COLUMN IF NOT EXISTS event_token TEXT`;
+        await sql`ALTER TABLE redirect_wait_events ADD COLUMN IF NOT EXISTS status TEXT`;
+        await sql`ALTER TABLE redirect_wait_events ADD COLUMN IF NOT EXISTS started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`;
+        await sql`ALTER TABLE redirect_wait_events ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`;
+        await sql`CREATE UNIQUE INDEX IF NOT EXISTS redirect_wait_events_event_token_uidx ON redirect_wait_events(event_token)`;
+        await sql`CREATE INDEX IF NOT EXISTS redirect_wait_events_redirect_id_idx ON redirect_wait_events(redirect_id)`;
+        await sql`CREATE INDEX IF NOT EXISTS redirect_wait_events_status_idx ON redirect_wait_events(status)`;
     } catch (error) {
         console.error('Database initialization failed:', error);
     }

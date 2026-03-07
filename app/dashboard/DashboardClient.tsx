@@ -1,10 +1,10 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import {
   createUserRedirect,
   deleteUserRedirect,
-  getUserRedirectLinkStats,
   updateUserRedirect,
 } from '@/lib/user-actions';
 
@@ -41,26 +41,6 @@ interface DashboardStats {
   }>;
   trafficSources: Array<{
     source: string;
-    clicks: number;
-  }>;
-}
-
-interface LinkStats {
-  totals: {
-    clicks: number;
-    last24h: number;
-    last7d: number;
-  };
-  clicksLast7Days: Array<{
-    date: string;
-    clicks: number;
-  }>;
-  trafficSources: Array<{
-    source: string;
-    clicks: number;
-  }>;
-  topReferrers: Array<{
-    referrer_host: string;
     clicks: number;
   }>;
 }
@@ -555,9 +535,6 @@ function RedirectItem({ redirect }: { redirect: Redirect }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editUrl, setEditUrl] = useState(redirect.url);
   const [showQr, setShowQr] = useState(false);
-  const [showStats, setShowStats] = useState(false);
-  const [statsLoading, setStatsLoading] = useState(false);
-  const [linkStats, setLinkStats] = useState<LinkStats | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   const handleDelete = async () => {
@@ -594,26 +571,6 @@ function RedirectItem({ redirect }: { redirect: Redirect }) {
       }
     } catch {
       alert('Erreur copie');
-    }
-  };
-
-  const toggleStats = async () => {
-    if (showStats) {
-      setShowStats(false);
-      return;
-    }
-
-    setShowStats(true);
-    if (linkStats) return;
-
-    setStatsLoading(true);
-    try {
-      const data = await getUserRedirectLinkStats(redirect.id);
-      setLinkStats(data);
-    } catch {
-      alert('Erreur chargement stats');
-    } finally {
-      setStatsLoading(false);
     }
   };
 
@@ -657,9 +614,9 @@ function RedirectItem({ redirect }: { redirect: Redirect }) {
           <button id={`copy-${redirect.id}`} onClick={copyToClipboard} className="btn btn-soft mini-btn" type="button">
             Copier
           </button>
-          <button onClick={toggleStats} className="btn btn-soft mini-btn" type="button">
+          <Link href={`/dashboard/link/${redirect.id}`} className="btn btn-soft mini-btn">
             Stats
-          </button>
+          </Link>
           <button onClick={() => setShowQr((prev) => !prev)} className="btn btn-soft mini-btn" type="button">
             QR
           </button>
@@ -683,72 +640,6 @@ function RedirectItem({ redirect }: { redirect: Redirect }) {
           </div>
         </div>
       )}
-
-      {showStats && (
-        <div className="expand-block">
-          {statsLoading ? (
-            <p>Chargement des stats...</p>
-          ) : !linkStats ? (
-            <p>Aucune stat disponible.</p>
-          ) : (
-            <div className="stats-box-grid">
-              <div className="mini-card">
-                <h4>Resume</h4>
-                <p>Total: <strong>{linkStats.totals.clicks}</strong></p>
-                <p>24h: <strong>{linkStats.totals.last24h}</strong></p>
-                <p>7 jours: <strong>{linkStats.totals.last7d}</strong></p>
-              </div>
-
-              <div className="mini-card">
-                <h4>Origine</h4>
-                {linkStats.trafficSources.length === 0 ? (
-                  <p>Aucune source</p>
-                ) : (
-                  linkStats.trafficSources.map((row) => (
-                    <div key={row.source} className="mini-line">
-                      <span>{formatSourceLabel(row.source)}</span>
-                      <strong>{row.clicks}</strong>
-                    </div>
-                  ))
-                )}
-              </div>
-
-              <div className="mini-card">
-                <h4>Referers</h4>
-                {linkStats.topReferrers.length === 0 ? (
-                  <p>Aucun referer externe</p>
-                ) : (
-                  linkStats.topReferrers.map((row) => (
-                    <div key={row.referrer_host} className="mini-line">
-                      <span className="ellipsis">{row.referrer_host}</span>
-                      <strong>{row.clicks}</strong>
-                    </div>
-                  ))
-                )}
-              </div>
-
-              <div className="mini-card">
-                <h4>7 jours</h4>
-                <div className="mini-bars">
-                  {linkStats.clicksLast7Days.map((point) => {
-                    const localMax = Math.max(...linkStats.clicksLast7Days.map((d) => d.clicks), 1);
-                    return (
-                      <div key={point.date}>
-                        <div
-                          className="mini-bar"
-                          style={{ height: `${Math.max((point.clicks / localMax) * 45, point.clicks > 0 ? 7 : 2)}px` }}
-                        />
-                        <div className="mini-day">{formatDayLabel(point.date)}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
       <style jsx>{`
         .link-card {
           border: 1px solid var(--line);
@@ -837,70 +728,6 @@ function RedirectItem({ redirect }: { redirect: Redirect }) {
           padding: 0.5rem;
         }
 
-        .stats-box-grid {
-          display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 0.5rem;
-        }
-
-        .mini-card {
-          border: 1px solid var(--line);
-          border-radius: 10px;
-          padding: 0.6rem;
-          background: #fff;
-          font-size: 0.86rem;
-        }
-
-        .mini-card h4 {
-          font-size: 0.88rem;
-          margin-bottom: 0.42rem;
-        }
-
-        .mini-card p {
-          font-size: 0.84rem;
-          color: var(--text-muted);
-          margin-bottom: 0.2rem;
-        }
-
-        .mini-line {
-          display: flex;
-          justify-content: space-between;
-          gap: 0.4rem;
-          margin-bottom: 0.2rem;
-          font-size: 0.84rem;
-        }
-
-        .ellipsis {
-          white-space: nowrap;
-          text-overflow: ellipsis;
-          overflow: hidden;
-        }
-
-        .mini-bars {
-          min-height: 64px;
-          display: grid;
-          grid-template-columns: repeat(7, minmax(0, 1fr));
-          gap: 0.25rem;
-          align-items: end;
-        }
-
-        .mini-bar {
-          background: linear-gradient(180deg, #93c5fd 0%, #2563eb 100%);
-          border-radius: 4px 4px 2px 2px;
-        }
-
-        .mini-day {
-          margin-top: 0.12rem;
-          font-size: 0.56rem;
-          text-align: center;
-          color: var(--text-muted);
-        }
-
-        @media (max-width: 760px) {
-          .stats-box-grid {
-            grid-template-columns: 1fr;
-          }
-        }
       `}</style>
     </div>
   );
