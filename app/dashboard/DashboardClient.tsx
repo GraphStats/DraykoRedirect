@@ -98,6 +98,7 @@ export default function DashboardClient({
   initialRedirects: Redirect[];
   initialStats: DashboardStats;
 }) {
+  const [activeView, setActiveView] = useState<'stats' | 'links'>('links');
   const [url, setUrl] = useState('');
   const [customId, setCustomId] = useState('');
   const [loading, setLoading] = useState(false);
@@ -128,7 +129,31 @@ export default function DashboardClient({
 
   return (
     <div className="dash-layout">
-      <section className="glass-card section-card">
+      <div className="view-switch-wrap">
+        <div className="view-switch" role="tablist" aria-label="Selection de la vue dashboard">
+          <button
+            type="button"
+            className={`view-pill ${activeView === 'links' ? 'active' : ''}`}
+            onClick={() => setActiveView('links')}
+            role="tab"
+            aria-selected={activeView === 'links'}
+          >
+            Liens
+          </button>
+          <button
+            type="button"
+            className={`view-pill ${activeView === 'stats' ? 'active' : ''}`}
+            onClick={() => setActiveView('stats')}
+            role="tab"
+            aria-selected={activeView === 'stats'}
+          >
+            Stats Global
+          </button>
+        </div>
+      </div>
+
+      {activeView === 'stats' ? (
+        <section className="glass-card section-card">
         <h2>Apercu global</h2>
 
         <div className="stats-grid">
@@ -234,9 +259,9 @@ export default function DashboardClient({
             )}
           </article>
         </div>
-      </section>
-
-      <section className="dashboard-grid">
+        </section>
+      ) : (
+        <section className="dashboard-grid">
         <article className="glass-card section-card create-panel">
           <h2>Creer un nouveau lien</h2>
           <form onSubmit={handleCreate} className="form-stack">
@@ -280,13 +305,48 @@ export default function DashboardClient({
             </div>
           )}
         </article>
-      </section>
+        </section>
+      )}
 
       <style jsx>{`
         .dash-layout {
           display: flex;
           flex-direction: column;
           gap: 1rem;
+        }
+
+        .view-switch-wrap {
+          display: flex;
+          justify-content: center;
+        }
+
+        .view-switch {
+          background: #eef3fb;
+          border: 1px solid var(--line);
+          border-radius: 999px;
+          padding: 0.24rem;
+          display: inline-flex;
+          gap: 0.3rem;
+          width: fit-content;
+          max-width: 100%;
+        }
+
+        .view-pill {
+          border: 0;
+          background: transparent;
+          color: #35506c;
+          font-weight: 700;
+          border-radius: 999px;
+          padding: 0.46rem 1rem;
+          cursor: pointer;
+          transition: background 0.2s ease, color 0.2s ease;
+          white-space: nowrap;
+        }
+
+        .view-pill.active {
+          background: #ffffff;
+          color: #0f172a;
+          box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
         }
 
         .stats-grid,
